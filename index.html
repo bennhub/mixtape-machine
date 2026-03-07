@@ -620,15 +620,15 @@
 <body>
     <div class="container">
         <h2 class="container__header">Your Mix Tape</h2>
-        <p class="container__paragraph">Paste the URL of a Spotify playlist in the field below and click play on the Walkman!</p>
+        <p class="container__paragraph">Paste a Spotify or YouTube Music link below, then click play on the Walkman.</p>
         <div id="form">
-            <input class="form__input" type="text" id="playlist-input" placeholder="https://open.spotify.com/playlist/..." />
+            <input class="form__input" type="text" id="playlist-input" placeholder="Spotify or YouTube Music URL..." />
             <div class="button-row">
                 <button class="share-button load-button" id="load-button">Load</button>
                 <button class="share-button" id="share-button">Share This Mixtape</button>
             </div>
             <div class="meta-row">
-                <p class="share-feedback" id="share-feedback">Paste a playlist URL, then hit play or share.</p>
+                <p class="share-feedback" id="share-feedback">Paste a link, then hit play or share.</p>
                 <p class="player-status" id="player-status">Stopped</p>
             </div>
         </div>
@@ -708,6 +708,7 @@
         let shareFeedback = document.getElementById("share-feedback");
         let playerStatus = document.getElementById("player-status");
         let isPlaylistReady = false;
+        let currentProvider = null;
         let rumbleTimer = null;
         let rumbleOn = false;
         let rumbleTapTimes = [];
@@ -732,10 +733,78 @@
             }
         }
 
-        function getPlaylistId(url) {
+        function parseMediaSource(url) {
             if (!url) return null;
-            const match = url.match(/open\.spotify\.com\/playlist\/([a-zA-Z0-9]+)/);
-            return match ? match[1] : null;
+
+            const spotifyMatch = url.match(/open\.spotify\.com\/(playlist|track|album|artist|show|episode)\/([a-zA-Z0-9]+)/);
+            if (spotifyMatch) {
+                return {
+                    provider: 'spotify',
+                    kind: spotifyMatch[1],
+                    id: spotifyMatch[2]
+                };
+            }
+
+            let parsedUrl;
+            try {
+                parsedUrl = new URL(url);
+            } catch (e) {
+                return null;
+            }
+
+            const host = parsedUrl.hostname.replace(/^www\./, '');
+            const isYouTubeHost = host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com' || host === 'youtu.be';
+            if (!isYouTubeHost) return null;
+
+            const listId = parsedUrl.searchParams.get('list');
+            if (listId) {
+                return {
+                    provider: 'youtube',
+                    kind: 'playlist',
+                    id: listId
+                };
+            }
+
+            let videoId = parsedUrl.searchParams.get('v');
+            if (!videoId && host === 'youtu.be') {
+                videoId = parsedUrl.pathname.replace('/', '').trim();
+            }
+            if (!videoId) {
+                const path = parsedUrl.pathname;
+                const shortMatch = path.match(/^\/shorts\/([a-zA-Z0-9_-]{6,})/);
+                const liveMatch = path.match(/^\/live\/([a-zA-Z0-9_-]{6,})/);
+                const embedMatch = path.match(/^\/embed\/([a-zA-Z0-9_-]{6,})/);
+                if (shortMatch) videoId = shortMatch[1];
+                else if (liveMatch) videoId = liveMatch[1];
+                else if (embedMatch) videoId = embedMatch[1];
+            }
+            if (videoId) {
+                return {
+                    provider: 'youtube',
+                    kind: 'video',
+                    id: videoId
+                };
+            }
+
+            return null;
+        }
+
+        function buildEmbedUrl(source) {
+            if (!source) return null;
+
+            if (source.provider === 'spotify') {
+                return `https://open.spotify.com/embed/${source.kind}/${source.id}?utm_source=generator&autoplay=1&theme=0`;
+            }
+
+            if (source.provider === 'youtube') {
+                const origin = encodeURIComponent(window.location.origin);
+                if (source.kind === 'playlist') {
+                    return `https://www.youtube.com/embed/videoseries?list=${source.id}&autoplay=1&enablejsapi=1&origin=${origin}`;
+                }
+                return `https://www.youtube.com/embed/${source.id}?autoplay=1&enablejsapi=1&origin=${origin}`;
+            }
+
+            return null;
         }
 
         function setPlayReadyState(isReady) {
@@ -757,26 +826,29 @@
 
         function loadPlaylistFromInput(showFeedback = true) {
             const url = playlistInput.value.trim();
-            const playlistId = getPlaylistId(url);
+            const source = parseMediaSource(url);
 
-            if (!playlistId) {
+            if (!source) {
                 setPlayReadyState(false);
+                currentProvider = null;
                 if (showFeedback) {
-                    setShareFeedback("That URL does not look like a Spotify playlist link.", "error");
+                    setShareFeedback("Use a valid Spotify or YouTube link.", "error");
                 }
                 return false;
             }
 
-            const embedUrl = `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&autoplay=1&theme=0`;
+            const embedUrl = buildEmbedUrl(source);
             widget.src = embedUrl;
             widget.style.width = '100%';
             widget.style.height = '100%';
             widget.style.minHeight = '100%';
             localStorage.setItem('mixtapePlaylistUrl', url);
             setPlayReadyState(true);
+            currentProvider = source.provider;
             shareBtn.disabled = false;
             if (showFeedback) {
-                setShareFeedback("Playlist loaded. Press play on the Walkman.", "success");
+                const providerLabel = source.provider === 'youtube' ? 'YouTube' : 'Spotify';
+                setShareFeedback(`${providerLabel} link loaded. Press play on the Walkman.`, "success");
             }
             return true;
         }
@@ -847,9 +919,9 @@
             let url = playlistInput.value.trim();
             setPlayReadyState(false);
             if (url.length > 0) {
-                setShareFeedback("Press Load to prepare this playlist.", "");
+                setShareFeedback("Press Load to prepare this link.", "");
             } else {
-                setShareFeedback("Paste a playlist URL, then hit play or share.");
+                setShareFeedback("Paste a link, then hit play or share.");
             }
         }
 
@@ -965,18 +1037,45 @@
             rotateWheels.timeScale(0);
         }
 
-        // Spotify iframe control functions
-        function sendSpotifyCommand(command) {
+        // Embedded player control functions
+        function sendPlayerCommand(command) {
             try {
                 const iframe = document.getElementById('widget');
                 if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.postMessage({
-                        command: command
-                    }, '*');
+                    if (currentProvider === 'spotify') {
+                        iframe.contentWindow.postMessage({
+                            command: command
+                        }, '*');
+                    } else if (currentProvider === 'youtube') {
+                        if (command === 'play') {
+                            iframe.contentWindow.postMessage(JSON.stringify({
+                                event: 'command',
+                                func: 'playVideo',
+                                args: []
+                            }), '*');
+                        } else if (command === 'pause') {
+                            iframe.contentWindow.postMessage(JSON.stringify({
+                                event: 'command',
+                                func: 'pauseVideo',
+                                args: []
+                            }), '*');
+                        } else if (command === 'stop') {
+                            iframe.contentWindow.postMessage(JSON.stringify({
+                                event: 'command',
+                                func: 'stopVideo',
+                                args: []
+                            }), '*');
+                        }
+                    }
                 }
             } catch (e) {
-                console.log('Spotify control not available');
+                console.log('Player control not available');
             }
+        }
+
+        function hardStopEmbeddedMedia() {
+            sendPlayerCommand('stop');
+            widget.src = 'about:blank';
         }
 
         // Event listeners
@@ -989,6 +1088,8 @@
                 setShareFeedback("Press Load first, then press play.", "error");
                 return;
             }
+            // Rehydrate player after a hard stop/unmount.
+            loadPlaylistFromInput(false);
             showNowPlayingSurface();
             startAnimation();
             setPlayerStatus("Playing");
@@ -997,7 +1098,7 @@
 
             // Auto-play the Spotify playlist
             setTimeout(() => {
-                sendSpotifyCommand('play');
+                sendPlayerCommand('play');
             }, 1000); // Wait for iframe to load
         }
 
@@ -1009,7 +1110,7 @@
             stopAnimation();
             setPlayerStatus("Paused");
             setPlayActiveState(true);
-            sendSpotifyCommand('pause');
+            sendPlayerCommand('pause');
         }
 
         stopBtn.onclick = function() {
@@ -1023,7 +1124,7 @@
             setPlayActiveState(false);
             setRumbleState(false);
             setRumbleEnabled(false);
-            sendSpotifyCommand('pause');
+            hardStopEmbeddedMedia();
         }
 
         forwardBtn.onclick = function() {
@@ -1104,7 +1205,7 @@
 
         shareBtn.addEventListener('click', function() {
             const playlistUrl = playlistInput.value.trim();
-            if (getPlaylistId(playlistUrl)) {
+            if (parseMediaSource(playlistUrl)) {
                 const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(playlistUrl)}`;
 
                 navigator.clipboard.writeText(shareUrl).then(() => {
@@ -1114,7 +1215,7 @@
                     setShareFeedback("Copy dialog opened. Share your mixtape link.", "success");
                 });
             } else {
-                setShareFeedback("Please enter a valid Spotify playlist URL first.", "error");
+                setShareFeedback("Please enter a valid Spotify or YouTube link first.", "error");
             }
         });
 
