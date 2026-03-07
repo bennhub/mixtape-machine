@@ -125,6 +125,44 @@
             cursor: pointer;
         }
 
+        #rumble-toggle {
+            cursor: pointer;
+        }
+
+        #rumble-toggle.rumble-disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        #rumble-button {
+            fill: #3b3b3b;
+            stroke: #f7d84d;
+            stroke-width: 2.5;
+            rx: 8;
+            transition: fill 0.2s ease, filter 0.2s ease, stroke 0.2s ease;
+        }
+
+        #rumble-shadow {
+            fill: rgba(0, 0, 0, 0.28);
+            pointer-events: none;
+        }
+
+        #rumble-label {
+            fill: #ffffff;
+            font-family: 'Muli', sans-serif;
+            font-weight: 700;
+            font-size: 8px;
+            letter-spacing: 0.7px;
+            pointer-events: none;
+        }
+
+        #rumble-toggle.rumble-on #rumble-button {
+            fill: #f55555;
+            stroke: #ffffff;
+            filter: drop-shadow(0 0 8px rgba(245, 85, 85, 0.85));
+        }
+
         .container {
             display: flex;
             flex-direction: column;
@@ -224,6 +262,13 @@
         .share-button:active {
             transform: translateY(0);
             box-shadow: 0 4px 10px rgba(245, 85, 85, 0.22);
+        }
+
+        .share-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         #playbutton.play-ready {
@@ -463,6 +508,11 @@
             <path id="stopbutton" d="M288.8 51.6h-47.2c-1.7 0-3-1.3-3-3V31.3c0-1.7 1.3-3 3-3h47.2c1.7 0 3 1.3 3 3v17.3c0 1.7-1.3 3-3 3z"/>
             <path id="forwardbutton" d="M358.8 51.6h-47.2c-1.7 0-3-1.3-3-3V31.3c0-1.7 1.3-3 3-3h47.2c1.7 0 3 1.3 3 3v17.3c0 1.7-1.3 3-3 3z"/>
             <g id="buttonbar"><path class="st9" d="M374.3 48.8H84.8c-3.9 0-7 3.1-7 7v21c0 3.9 3.1 7 7 7h289.5c3.9 0 7-3.1 7-7v-21c0-3.8-3.1-7-7-7z"/><path class="st10" d="M131.4 66.3l-12.5 6.8V59.6l12.5 6.7zm204.2 0l-12.5 6.8V59.6l12.5 6.7zm15 0l-12.5 6.8V59.6l12.5 6.7zm-161.2-6.7h4.3v13.6h-4.3V59.6zm7.3 0h4.3v13.6h-4.3V59.6zm61.7 0H272v13.6h-13.6V59.6z"/></g>
+            <g id="rumble-toggle" transform="translate(406 356)">
+                <rect id="rumble-shadow" x="-33" y="-12" width="64" height="24" rx="8"/>
+                <rect id="rumble-button" x="-35" y="-14" width="64" height="24" rx="8"/>
+                <text id="rumble-label" x="-3" y="-2" text-anchor="middle" dominant-baseline="middle">SHAKE</text>
+            </g>
             <g id="leftwheel"><circle class="st11" cx="142.7" cy="273.5" r="41.6"/><circle class="st12" cx="142.7" cy="273.5" r="33.7"/><path class="st13" d="M147.7 259.2h-10.1l-4-18.1h18.1l-4 18.1zm-10.1 28.6h10.1l4 18.1h-18.1l4-18.1zm-9.2-19.4v10.2l-18.2 4v-18.2l18.2 4zm28.5 10.2v-10.2l18.2-4v18.2l-18.2-4z"/></g>
             <g id="rightwheel"><circle class="st11" cx="316.5" cy="273.5" r="41.6"/><circle class="st12" cx="316.5" cy="273.5" r="33.7"/><path class="st13" d="M321.5 259.2h-10.1l-4-18.1h18.1l-4 18.1zm-10.1 28.6h10.1l4 18.1h-18.1l4-18.1zm-9.2-19.4v10.2l-18.2 4v-18.2l18.2 4zm28.5 10.2v-10.2l18.2-4v18.2l-18.2-4z"/></g>
 </g>
@@ -491,14 +541,19 @@
         let pauseBtn = document.getElementById("pausebutton");
         let stopBtn = document.getElementById("stopbutton");
         let forwardBtn = document.getElementById("forwardbutton");
+        let rumbleToggle = document.getElementById("rumble-toggle");
         let loadBtn = document.getElementById("load-button");
+        let shareBtn = document.getElementById("share-button");
         let playlistInput = document.getElementById("playlist-input");
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
         let cassetteCover = document.querySelector(".cassette-cover");
+        let walkmanSvg = document.getElementById("walkman");
         let shareFeedback = document.getElementById("share-feedback");
         let playerStatus = document.getElementById("player-status");
         let isPlaylistReady = false;
+        let rumbleTimer = null;
+        let rumbleOn = false;
 
         function setShareFeedback(message, type = "") {
             shareFeedback.textContent = message;
@@ -558,6 +613,7 @@
             widget.style.minHeight = '100%';
             localStorage.setItem('mixtapePlaylistUrl', url);
             setPlayReadyState(true);
+            shareBtn.disabled = false;
             if (showFeedback) {
                 setShareFeedback("Playlist loaded. Press play on the Walkman.", "success");
             }
@@ -648,6 +704,43 @@
             rotateWheels.timeScale(0);
         }
 
+        function triggerRumble() {
+            gsap.fromTo(walkmanSvg,
+                { x: -3, y: 0 },
+                {
+                    x: 3,
+                    duration: 0.08,
+                    repeat: 5,
+                    yoyo: true,
+                    ease: "power1.inOut",
+                    onComplete: () => gsap.set(walkmanSvg, { x: 0, y: 0 })
+                }
+            );
+        }
+
+        function setRumbleState(enabled) {
+            rumbleOn = enabled;
+            rumbleToggle.classList.toggle('rumble-on', enabled);
+
+            if (rumbleTimer) {
+                clearInterval(rumbleTimer);
+                rumbleTimer = null;
+            }
+
+            if (enabled) {
+                triggerRumble();
+                rumbleTimer = setInterval(triggerRumble, 10000);
+                setShareFeedback("Rumble mode on. Player shakes every 10 seconds.", "success");
+            } else {
+                gsap.set(walkmanSvg, { x: 0, y: 0 });
+                setShareFeedback("Rumble mode off.", "");
+            }
+        }
+
+        function setRumbleEnabled(enabled) {
+            rumbleToggle.classList.toggle('rumble-disabled', !enabled);
+        }
+
         function resetAnimation() {
             slideTape.progress(0);
             slideTape.timeScale(0);
@@ -684,6 +777,7 @@
             startAnimation();
             setPlayerStatus("Playing");
             setPlayActiveState(true);
+            setRumbleEnabled(true);
 
             // Auto-play the Spotify playlist
             setTimeout(() => {
@@ -712,6 +806,8 @@
             resetAnimation();
             setPlayerStatus("Stopped");
             setPlayActiveState(false);
+            setRumbleState(false);
+            setRumbleEnabled(false);
             sendSpotifyCommand('pause');
         }
 
@@ -719,12 +815,16 @@
             setShareFeedback("Fast-forward is not mapped yet. Use play, pause, stop, and share.", "error");
         }
 
+        rumbleToggle.onclick = function() {
+            setRumbleState(!rumbleOn);
+        }
+
         // Share functionality
         loadBtn.addEventListener('click', function() {
             loadPlaylistFromInput(true);
         });
 
-        document.getElementById('share-button').addEventListener('click', function() {
+        shareBtn.addEventListener('click', function() {
             const playlistUrl = playlistInput.value.trim();
             if (getPlaylistId(playlistUrl)) {
                 const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(playlistUrl)}`;
@@ -750,6 +850,14 @@
                 }
             }
         });
+
+        window.addEventListener('beforeunload', function() {
+            if (rumbleTimer) {
+                clearInterval(rumbleTimer);
+            }
+        });
+
+        setRumbleEnabled(false);
     </script>
 </body>
 </html>
