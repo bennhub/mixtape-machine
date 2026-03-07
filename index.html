@@ -4,69 +4,106 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mixtape - Spotify Walkman</title>
-    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Muli:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Muli:wght@400;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
-        body {
-            background-image: linear-gradient(to right, #fdfbfb 0%, #ebedee 100%);
-            padding: 20px;
-            margin: 0;
-            font-family: 'Muli', sans-serif;
+        :root {
+            --bg-cream: #f8f4e8;
+            --bg-warm: #f2dec9;
+            --ink: #2b2b2b;
+            --muted: #605c56;
+            --accent: #f55555;
+            --accent-deep: #ce3a3a;
+            --sun: #fccf31;
+            --card: #fffdf8;
+            --shadow: rgba(20, 20, 20, 0.15);
+            --ok: #1f8b4c;
+            --cover-overlay-top: 10.5%;
+            --cover-overlay-side: 2.2%;
+            --cover-overlay-bottom: 3%;
         }
 
-        iframe {
-            display: none;
-            border-radius: 8px;
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 10% 10%, rgba(252, 207, 49, 0.15), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(245, 85, 85, 0.13), transparent 28%),
+                linear-gradient(135deg, var(--bg-cream), var(--bg-warm));
+            padding: 20px 18px 32px;
+            margin: 0;
+            font-family: 'Muli', sans-serif;
+            color: var(--ink);
         }
 
         .main-container {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            gap: 40px;
-            margin: 40px 0;
+            gap: 28px;
+            margin: 28px 0 12px;
             flex-wrap: wrap;
+            width: 100%;
         }
 
         .player-section {
             flex: 1;
-            min-width: 400px;
+            min-width: 300px;
         }
 
         .cassette-section {
             flex: 1;
-            min-width: 400px;
+            min-width: 300px;
         }
 
         .cassette-container {
+            width: 100%;
+            border-radius: 16px;
+            padding: 16px;
+            background: linear-gradient(155deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.38));
+            box-shadow: 0 10px 35px var(--shadow);
+            backdrop-filter: blur(2px);
+        }
+
+        .cassette-art {
             position: relative;
             width: 100%;
+            line-height: 0;
         }
 
         .cassette-cover {
             width: 100%;
             height: auto;
-            border-radius: 8px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            display: block;
+            border-radius: 14px;
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.26);
         }
 
         .playlist-overlay {
             position: absolute;
-            top: 8%;
-            left: 6%;
-            right: 6%;
-            bottom: 8%;
+            top: var(--cover-overlay-top);
+            left: var(--cover-overlay-side);
+            right: var(--cover-overlay-side);
+            bottom: var(--cover-overlay-bottom);
             background: rgba(0,0,0,0.05);
             border-radius: 6px;
             padding: 0;
             display: none;
             overflow: hidden;
+            z-index: 2;
         }
 
         .playlist-overlay iframe {
+            position: absolute;
+            inset: 0;
             width: 100% !important;
             height: 100% !important;
             max-height: 100% !important;
+            min-height: 100% !important;
             display: block;
             border-radius: 6px;
             border: none;
@@ -75,6 +112,7 @@
         #walkman {
             width: 100%;
             max-width: 800px;
+            filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.2));
         }
 
         #forwardbutton, #playbutton, #pausebutton, #stopbutton {
@@ -88,6 +126,8 @@
             align-items: center;
             width: 100%;
             text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .container__header {
@@ -96,115 +136,182 @@
             -webkit-background-clip: text;
             color: transparent;
             font-family: 'Luckiest Guy', cursive;
-            font-size: 72px;
-            margin: 20px 0 10px;
+            font-size: clamp(2.5rem, 5vw, 4.7rem);
+            letter-spacing: 1px;
+            margin: 14px 0 8px;
+            text-shadow: 0 8px 20px rgba(245, 85, 85, 0.16);
         }
 
         .container__paragraph {
-            color: #333333;
+            color: var(--muted);
             max-width: 750px;
             font-family: 'Muli', sans-serif;
-            font-size: 18px;
-            line-height: 30px;
+            font-size: clamp(1rem, 1.9vw, 1.12rem);
+            line-height: 1.65;
             margin: 0;
         }
 
+        #form {
+            width: min(760px, 100%);
+            margin-top: 20px;
+            padding: 18px 18px 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            box-shadow: 0 8px 30px var(--shadow);
+        }
+
         .form__input {
-            padding: 16px 10px;
-            color: #333333;
-            border: none;
-            width: 600px;
+            box-sizing: border-box;
+            padding: 15px 12px;
+            color: var(--ink);
+            border: 2px dashed rgba(252, 207, 49, 0.95);
+            width: 100%;
             text-align: center;
-            margin: 20px 0 40px;
-            font-size: 18px;
-            outline: #FCCF31 dashed 3px;
-            outline-offset: -2px;
-            transition: all .2s ease-in;
+            margin: 0;
+            font-size: 17px;
+            border-radius: 12px;
+            background: #fffefb;
+            transition: border-color .2s ease-in, box-shadow .2s ease-in;
         }
 
         .form__input:focus {
-            outline: #F55555 dashed 3px;
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(245, 85, 85, 0.14);
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
         }
 
         .share-button {
-            background: linear-gradient(135deg, #FCCF31 0%, #F55555 100%);
+            background: linear-gradient(135deg, var(--sun) 0%, var(--accent) 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 22px;
             font-size: 16px;
             font-family: 'Muli', sans-serif;
-            font-weight: 600;
-            border-radius: 8px;
+            font-weight: 700;
+            border-radius: 999px;
             cursor: pointer;
-            margin: 10px 0;
-            transition: transform 0.2s ease;
+            margin: 0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 8px 20px rgba(245, 85, 85, 0.24);
         }
 
         .share-button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(245, 85, 85, 0.3);
         }
 
         .share-button:active {
             transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(245, 85, 85, 0.22);
+        }
+
+        .meta-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            text-align: left;
+        }
+
+        .share-feedback {
+            min-height: 22px;
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .share-feedback.success {
+            color: var(--ok);
+        }
+
+        .share-feedback.error {
+            color: var(--accent-deep);
+        }
+
+        .player-status {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #3e3c39;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .player-status.playing {
+            color: #176f3d;
+        }
+
+        .cover-note {
+            margin: 12px 0 0;
+            font-family: 'Permanent Marker', cursive;
+            letter-spacing: 0.6px;
+            color: #704f2b;
+            font-size: 18px;
         }
 
         @media (max-width: 900px) {
             .main-container {
                 flex-direction: column;
                 align-items: center;
-                padding: 0 10px;
+                padding: 0;
+                gap: 20px;
             }
 
             .player-section {
                 min-width: auto;
+                width: 100%;
             }
 
             .cassette-section {
                 flex: none;
-                margin-top: 20px;
                 width: 100%;
-                max-width: 500px;
+                max-width: 560px;
             }
 
-            .playlist-overlay {
-                top: 15%;
-                left: 8%;
-                right: 8%;
-                bottom: 15%;
-            }
         }
 
         @media (max-width: 700px) {
-            .form__input {
-                width: 340px;
-            }
-            .container__header {
-                font-size: 48px;
-            }
-
-            .main-container {
-                padding: 0 5px;
+            :root {
+                --cover-overlay-top: 14.5%;
+                --cover-overlay-side: 2%;
+                --cover-overlay-bottom: 3.5%;
             }
 
             .cassette-section {
                 max-width: 400px;
             }
 
-            .playlist-overlay {
-                top: 18%;
-                left: 10%;
-                right: 10%;
-                bottom: 18%;
+            .share-button {
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .meta-row {
+                justify-content: center;
+                text-align: center;
             }
         }
 
         @media (max-width: 400px) {
-            .form__input {
-                width: 280px;
-            }
-            .container__header {
-                font-size: 36px;
-                margin: 10px 0 5px;
+            :root {
+                --cover-overlay-top: 16.5%;
+                --cover-overlay-side: 1.8%;
+                --cover-overlay-bottom: 4%;
             }
 
             .container__paragraph {
@@ -214,28 +321,45 @@
             }
 
             .main-container {
-                padding: 0 8px;
-                margin: 20px 0;
-                gap: 20px;
+                margin: 18px 0 8px;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .player-section {
+                width: 100%;
+                max-width: 339px;
+                min-width: 0;
+                margin: 0 auto;
             }
 
             .cassette-section {
-                max-width: 320px;
-                width: calc(100vw - 32px);
-            }
-
-            .playlist-overlay {
-                top: 20%;
-                left: 12%;
-                right: 12%;
-                bottom: 20%;
+                width: 100%;
+                max-width: 339px;
+                margin: 0 auto;
             }
 
             .cassette-cover {
                 width: 100%;
-                max-width: 320px;
+                max-width: 339px;
                 height: auto;
                 border-radius: 6px;
+            }
+
+            #walkman {
+                display: block;
+                width: 100%;
+                max-width: 339px;
+                margin: 0 auto;
+            }
+
+            #form {
+                padding: 14px;
+            }
+
+            body {
+                padding-left: 14px;
+                padding-right: 14px;
             }
         }
     </style>
@@ -246,12 +370,18 @@
         <p class="container__paragraph">Paste the URL of a Spotify playlist in the field below and click play on the Walkman!</p>
         <div id="form">
             <input class="form__input" type="text" id="playlist-input" placeholder="https://open.spotify.com/playlist/..." />
-            <button class="share-button" id="share-button">Share This Mixtape</button>
+            <div class="button-row">
+                <button class="share-button" id="share-button">Share This Mixtape</button>
+            </div>
+            <div class="meta-row">
+                <p class="share-feedback" id="share-feedback">Paste a playlist URL, then hit play or share.</p>
+                <p class="player-status" id="player-status">Stopped</p>
+            </div>
         </div>
 
         <div class="main-container">
             <div class="player-section">
-                <svg id="walkman" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 500 400">
+                <svg id="walkman" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-20 0 500 400">
             <style>.st0{fill:#fabf2e}.st1{fill:#2e2e2e}.st2{fill:#d1d3d4}.st3{fill:#fff}.st4{fill:#a7a9ac}.st5{clip-path:url(#SVGID_3_)}.st6{clip-path:url(#SVGID_4_)}.st7{clip-path:url(#SVGID_7_)}.st8{clip-path:url(#SVGID_8_)}.st9{fill:#3a3b3a}.st10{fill:#818182}.st11{fill:#e6e7e8}.st12{fill:#fff;stroke:#58595b;stroke-width:3;stroke-miterlimit:10}.st13{fill:#58595b}.st14{fill:#6d6e71}.st15{fill:#7b7b7b}.st16{fill:#cdd0d6}.st17{fill:#414042}.st18{fill:#cccdce}.st19{fill:#f9be2c}</style>
             <g id="wbody"><path class="st0" d="M424.1 392H35c-19.3 0-35-15.7-35-35V102.8c0-19.3 15.7-35 35-35h389.1c19.3 0 35 15.7 35 35V357c0 19.3-15.7 35-35 35z"/><path class="st1" d="M424.1 392H35c-19.3 0-35-15.7-35-35v-39.5c0-3.9 2.8-7.2 6.6-7.9l32.1-5.8c7.3-1.3 13.2-6.5 15.5-13.5l29.5-87.7c3.5-10.7 13.5-17.9 24.7-17.9h242.4c11.2 0 21.2 7.2 24.7 17.9l29.5 87.7c2.3 7 8.2 12.2 15.5 13.5l32.1 5.8c3.8.7 6.6 4 6.6 7.9V357c-.1 19.3-15.8 35-35.1 35z"/><path class="st2" d="M95.9 333.3c-6 0-11.5-2.7-15.3-7.4s-5.1-10.7-3.7-16.5l18.7-80.6c2.1-8.9 9.9-15.1 19-15.1h229.9c9.1 0 16.9 6.2 19 15.1l18.7 80.6c1.4 5.8 0 11.9-3.7 16.5s-9.3 7.4-15.3 7.4H95.9z"/><path d="M114.6 216.2h229.9c7.9 0 14.8 5.5 16.6 13.2l18.7 80.6c2.5 10.7-5.6 20.8-16.6 20.8H95.9c-10.9 0-19-10.2-16.6-20.8L98 229.3c1.8-7.7 8.7-13.1 16.6-13.1m0-5c-10.3 0-19.1 7-21.4 17l-18.7 80.6c-1.5 6.6 0 13.4 4.2 18.7 4.2 5.3 10.5 8.3 17.2 8.3h267.4c6.7 0 13-3 17.2-8.3 4.2-5.3 5.7-12.1 4.2-18.7L366 228.2c-2.3-10-11.1-17-21.4-17h-230z"/>
             <g id="tapebg"><path class="st3" d="M193.6 295.1c-2.2 0-4-1.8-4-4v-35.3c0-2.2 1.8-4 4-4h71.8c2.2 0 4 1.8 4 4v35.3c0 2.2-1.8 4-4 4h-71.8z"/><path class="st4" d="M265.5 252.9c1.7 0 3 1.3 3 3v35.3c0 1.7-1.3 3-3 3h-71.8c-1.7 0-3-1.3-3-3v-35.3c0-1.7 1.3-3 3-3h71.8m0-2h-71.8c-2.8 0-5 2.2-5 5v35.3c0 2.8 2.2 5 5 5h71.8c2.8 0 5-2.2 5-5v-35.3c0-2.8-2.3-5-5-5z"/></g>
@@ -274,10 +404,13 @@
 
             <div class="cassette-section">
                 <div class="cassette-container">
-                    <img src="cassetteTapeCover.png" alt="Cassette Tape Cover" class="cassette-cover" />
-                    <div class="playlist-overlay" id="playlist-overlay">
-                        <iframe id="widget" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                    <div class="cassette-art">
+                        <img src="cassetteTapeCover.png" alt="Cassette Tape Cover" class="cassette-cover" />
+                        <div class="playlist-overlay" id="playlist-overlay">
+                            <iframe id="widget" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                        </div>
                     </div>
+                    <p class="cover-note">Curated by you. Press play and pass it on.</p>
                 </div>
             </div>
         </div>
@@ -294,6 +427,30 @@
         let playlistInput = document.getElementById("playlist-input");
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
+        let shareFeedback = document.getElementById("share-feedback");
+        let playerStatus = document.getElementById("player-status");
+
+        function setShareFeedback(message, type = "") {
+            shareFeedback.textContent = message;
+            shareFeedback.classList.remove("success", "error");
+            if (type) {
+                shareFeedback.classList.add(type);
+            }
+        }
+
+        function setPlayerStatus(state) {
+            playerStatus.textContent = state;
+            playerStatus.classList.remove("playing");
+            if (state === "Playing") {
+                playerStatus.classList.add("playing");
+            }
+        }
+
+        function getPlaylistId(url) {
+            if (!url) return null;
+            const match = url.match(/open\.spotify\.com\/playlist\/([a-zA-Z0-9]+)/);
+            return match ? match[1] : null;
+        }
 
         // Check for shared playlist in URL parameters
         function getPlaylistFromURL() {
@@ -301,6 +458,10 @@
             const sharedPlaylist = urlParams.get('playlist');
             if (sharedPlaylist) {
                 return decodeURIComponent(sharedPlaylist);
+            }
+            const savedPlaylist = localStorage.getItem('mixtapePlaylistUrl');
+            if (savedPlaylist) {
+                return savedPlaylist;
             }
             return "https://open.spotify.com/playlist/5TZkls9cEOzWDR6qCxwDot";
         }
@@ -355,10 +516,19 @@
         // Functions
         function updatePlaylistFromInput() {
             let url = playlistInput.value.trim();
-            if (url && url.includes('open.spotify.com/playlist/')) {
-                let playlistId = url.split('/playlist/')[1].split('?')[0];
+            const playlistId = getPlaylistId(url);
+            if (playlistId) {
                 let embedUrl = `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&autoplay=1&theme=0`;
                 widget.src = embedUrl;
+                widget.style.width = '100%';
+                widget.style.height = '100%';
+                widget.style.minHeight = '100%';
+                localStorage.setItem('mixtapePlaylistUrl', url);
+                setShareFeedback("Playlist ready. Hit play on the Walkman.", "success");
+            } else if (url.length > 0) {
+                setShareFeedback("That URL does not look like a Spotify playlist link.", "error");
+            } else {
+                setShareFeedback("Paste a playlist URL, then hit play or share.");
             }
         }
 
@@ -402,8 +572,13 @@
             moveStopBtn.reverse();
 
             updatePlaylistFromInput();
+            if (!getPlaylistId(playlistInput.value.trim())) {
+                setShareFeedback("Enter a valid Spotify playlist URL first.", "error");
+                return;
+            }
             playlistOverlay.style.display = 'block';
             startAnimation();
+            setPlayerStatus("Playing");
 
             // Auto-play the Spotify playlist
             setTimeout(() => {
@@ -417,6 +592,7 @@
             moveStopBtn.reverse();
 
             stopAnimation();
+            setPlayerStatus("Paused");
             sendSpotifyCommand('pause');
         }
 
@@ -427,22 +603,28 @@
 
             playlistOverlay.style.display = 'none';
             resetAnimation();
+            setPlayerStatus("Stopped");
             sendSpotifyCommand('pause');
+        }
+
+        forwardBtn.onclick = function() {
+            setShareFeedback("Fast-forward is not mapped yet. Use play, pause, stop, and share.", "error");
         }
 
         // Share functionality
         document.getElementById('share-button').addEventListener('click', function() {
             const playlistUrl = playlistInput.value.trim();
-            if (playlistUrl && playlistUrl.includes('open.spotify.com/playlist/')) {
+            if (getPlaylistId(playlistUrl)) {
                 const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(playlistUrl)}`;
 
                 navigator.clipboard.writeText(shareUrl).then(() => {
-                    alert('Mixtape link copied to clipboard!');
+                    setShareFeedback("Mixtape link copied. Share it anywhere.", "success");
                 }).catch(() => {
                     prompt('Copy this link to share your mixtape:', shareUrl);
+                    setShareFeedback("Copy dialog opened. Share your mixtape link.", "success");
                 });
             } else {
-                alert('Please enter a valid Spotify playlist URL first!');
+                setShareFeedback("Please enter a valid Spotify playlist URL first.", "error");
             }
         });
 
