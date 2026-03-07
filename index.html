@@ -210,6 +210,12 @@
             box-shadow: 0 8px 20px rgba(245, 85, 85, 0.24);
         }
 
+        .load-button {
+            background: linear-gradient(135deg, #f7d84d 0%, #f1b22d 100%);
+            color: #2a2a2a;
+            box-shadow: 0 8px 20px rgba(241, 178, 45, 0.28);
+        }
+
         .share-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 22px rgba(245, 85, 85, 0.3);
@@ -218,6 +224,50 @@
         .share-button:active {
             transform: translateY(0);
             box-shadow: 0 4px 10px rgba(245, 85, 85, 0.22);
+        }
+
+        #playbutton.play-ready {
+            stroke: #46cc76;
+            stroke-width: 5;
+            filter: drop-shadow(0 0 8px rgba(70, 204, 118, 0.9));
+            animation: playReadyPulse 1.1s ease-in-out infinite;
+        }
+
+        #playbutton.play-active {
+            stroke: #ff4fa4;
+            stroke-width: 5;
+            filter: drop-shadow(0 0 8px rgba(255, 79, 164, 0.9));
+            animation: playActivePulse 1.1s ease-in-out infinite;
+        }
+
+        @keyframes playReadyPulse {
+            0% {
+                stroke-width: 4;
+                filter: drop-shadow(0 0 3px rgba(70, 204, 118, 0.45));
+            }
+            50% {
+                stroke-width: 6.5;
+                filter: drop-shadow(0 0 12px rgba(70, 204, 118, 1));
+            }
+            100% {
+                stroke-width: 4;
+                filter: drop-shadow(0 0 3px rgba(70, 204, 118, 0.45));
+            }
+        }
+
+        @keyframes playActivePulse {
+            0% {
+                stroke-width: 4;
+                filter: drop-shadow(0 0 3px rgba(255, 79, 164, 0.45));
+            }
+            50% {
+                stroke-width: 6.5;
+                filter: drop-shadow(0 0 12px rgba(255, 79, 164, 1));
+            }
+            100% {
+                stroke-width: 4;
+                filter: drop-shadow(0 0 3px rgba(255, 79, 164, 0.45));
+            }
         }
 
         .meta-row {
@@ -387,6 +437,7 @@
         <div id="form">
             <input class="form__input" type="text" id="playlist-input" placeholder="https://open.spotify.com/playlist/..." />
             <div class="button-row">
+                <button class="share-button load-button" id="load-button">Load</button>
                 <button class="share-button" id="share-button">Share This Mixtape</button>
             </div>
             <div class="meta-row">
@@ -440,12 +491,14 @@
         let pauseBtn = document.getElementById("pausebutton");
         let stopBtn = document.getElementById("stopbutton");
         let forwardBtn = document.getElementById("forwardbutton");
+        let loadBtn = document.getElementById("load-button");
         let playlistInput = document.getElementById("playlist-input");
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
         let cassetteCover = document.querySelector(".cassette-cover");
         let shareFeedback = document.getElementById("share-feedback");
         let playerStatus = document.getElementById("player-status");
+        let isPlaylistReady = false;
 
         function setShareFeedback(message, type = "") {
             shareFeedback.textContent = message;
@@ -469,6 +522,48 @@
             return match ? match[1] : null;
         }
 
+        function setPlayReadyState(isReady) {
+            isPlaylistReady = isReady;
+            playBtn.classList.toggle('play-ready', isReady);
+            if (!isReady) {
+                playBtn.classList.remove('play-active');
+            }
+        }
+
+        function setPlayActiveState(isActive) {
+            playBtn.classList.toggle('play-active', isActive);
+            if (isActive) {
+                playBtn.classList.remove('play-ready');
+            } else if (isPlaylistReady) {
+                playBtn.classList.add('play-ready');
+            }
+        }
+
+        function loadPlaylistFromInput(showFeedback = true) {
+            const url = playlistInput.value.trim();
+            const playlistId = getPlaylistId(url);
+
+            if (!playlistId) {
+                setPlayReadyState(false);
+                if (showFeedback) {
+                    setShareFeedback("That URL does not look like a Spotify playlist link.", "error");
+                }
+                return false;
+            }
+
+            const embedUrl = `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&autoplay=1&theme=0`;
+            widget.src = embedUrl;
+            widget.style.width = '100%';
+            widget.style.height = '100%';
+            widget.style.minHeight = '100%';
+            localStorage.setItem('mixtapePlaylistUrl', url);
+            setPlayReadyState(true);
+            if (showFeedback) {
+                setShareFeedback("Playlist loaded. Press play on the Walkman.", "success");
+            }
+            return true;
+        }
+
         // Check for shared playlist in URL parameters
         function getPlaylistFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -485,7 +580,7 @@
 
         // Set playlist from URL or default
         playlistInput.value = getPlaylistFromURL();
-        updatePlaylistFromInput();
+        loadPlaylistFromInput(false);
 
         // GSAP animations
         let slideTape = gsap.to(tape, {
@@ -533,17 +628,9 @@
         // Functions
         function updatePlaylistFromInput() {
             let url = playlistInput.value.trim();
-            const playlistId = getPlaylistId(url);
-            if (playlistId) {
-                let embedUrl = `https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator&autoplay=1&theme=0`;
-                widget.src = embedUrl;
-                widget.style.width = '100%';
-                widget.style.height = '100%';
-                widget.style.minHeight = '100%';
-                localStorage.setItem('mixtapePlaylistUrl', url);
-                setShareFeedback("Playlist ready. Hit play on the Walkman.", "success");
-            } else if (url.length > 0) {
-                setShareFeedback("That URL does not look like a Spotify playlist link.", "error");
+            setPlayReadyState(false);
+            if (url.length > 0) {
+                setShareFeedback("Press Load to prepare this playlist.", "");
             } else {
                 setShareFeedback("Paste a playlist URL, then hit play or share.");
             }
@@ -588,15 +675,15 @@
             movePauseBtn.reverse();
             moveStopBtn.reverse();
 
-            updatePlaylistFromInput();
-            if (!getPlaylistId(playlistInput.value.trim())) {
-                setShareFeedback("Enter a valid Spotify playlist URL first.", "error");
+            if (!isPlaylistReady) {
+                setShareFeedback("Press Load first, then press play.", "error");
                 return;
             }
             playlistOverlay.style.display = 'block';
             cassetteCover.classList.add('is-blurred');
             startAnimation();
             setPlayerStatus("Playing");
+            setPlayActiveState(true);
 
             // Auto-play the Spotify playlist
             setTimeout(() => {
@@ -611,6 +698,7 @@
 
             stopAnimation();
             setPlayerStatus("Paused");
+            setPlayActiveState(true);
             sendSpotifyCommand('pause');
         }
 
@@ -623,6 +711,7 @@
             cassetteCover.classList.remove('is-blurred');
             resetAnimation();
             setPlayerStatus("Stopped");
+            setPlayActiveState(false);
             sendSpotifyCommand('pause');
         }
 
@@ -631,6 +720,10 @@
         }
 
         // Share functionality
+        loadBtn.addEventListener('click', function() {
+            loadPlaylistFromInput(true);
+        });
+
         document.getElementById('share-button').addEventListener('click', function() {
             const playlistUrl = playlistInput.value.trim();
             if (getPlaylistId(playlistUrl)) {
@@ -651,7 +744,7 @@
         playlistInput.addEventListener('input', updatePlaylistFromInput);
         playlistInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                updatePlaylistFromInput();
+                loadPlaylistFromInput(true);
                 if (playlistOverlay.style.display === 'block') {
                     startAnimation();
                 }
