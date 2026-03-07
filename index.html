@@ -126,6 +126,28 @@
             outline: #F55555 dashed 3px;
         }
 
+        .share-button {
+            background: linear-gradient(135deg, #FCCF31 0%, #F55555 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-family: 'Muli', sans-serif;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: transform 0.2s ease;
+        }
+
+        .share-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .share-button:active {
+            transform: translateY(0);
+        }
+
         @media (max-width: 900px) {
             .main-container {
                 flex-direction: column;
@@ -224,6 +246,7 @@
         <p class="container__paragraph">Paste the URL of a Spotify playlist in the field below and click play on the Walkman!</p>
         <div id="form">
             <input class="form__input" type="text" id="playlist-input" placeholder="https://open.spotify.com/playlist/..." />
+            <button class="share-button" id="share-button">Share This Mixtape</button>
         </div>
 
         <div class="main-container">
@@ -272,8 +295,18 @@
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
 
-        // Set default playlist
-        playlistInput.value = "https://open.spotify.com/playlist/5TZkls9cEOzWDR6qCxwDot";
+        // Check for shared playlist in URL parameters
+        function getPlaylistFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedPlaylist = urlParams.get('playlist');
+            if (sharedPlaylist) {
+                return decodeURIComponent(sharedPlaylist);
+            }
+            return "https://open.spotify.com/playlist/5TZkls9cEOzWDR6qCxwDot";
+        }
+
+        // Set playlist from URL or default
+        playlistInput.value = getPlaylistFromURL();
         updatePlaylistFromInput();
 
         // GSAP animations
@@ -396,6 +429,22 @@
             resetAnimation();
             sendSpotifyCommand('pause');
         }
+
+        // Share functionality
+        document.getElementById('share-button').addEventListener('click', function() {
+            const playlistUrl = playlistInput.value.trim();
+            if (playlistUrl && playlistUrl.includes('open.spotify.com/playlist/')) {
+                const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(playlistUrl)}`;
+
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    alert('Mixtape link copied to clipboard!');
+                }).catch(() => {
+                    prompt('Copy this link to share your mixtape:', shareUrl);
+                });
+            } else {
+                alert('Please enter a valid Spotify playlist URL first!');
+            }
+        });
 
         // Update playlist when input changes
         playlistInput.addEventListener('input', updatePlaylistFromInput);
