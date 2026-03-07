@@ -18,9 +18,9 @@
             --card: #fffdf8;
             --shadow: rgba(20, 20, 20, 0.15);
             --ok: #1f8b4c;
-            --cover-overlay-top: 10.5%;
-            --cover-overlay-side: 2.2%;
-            --cover-overlay-bottom: 3%;
+            --cover-overlay-top: 5% !important;
+            --cover-overlay-side: 5%;
+            --cover-overlay-bottom: 8% !important;
         }
 
         *,
@@ -81,6 +81,12 @@
             display: block;
             border-radius: 14px;
             box-shadow: 0 12px 22px rgba(0, 0, 0, 0.26);
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+
+        .cassette-cover.is-blurred {
+            filter: blur(3px) saturate(0.9);
+            transform: scale(1.01);
         }
 
         .playlist-overlay {
@@ -100,10 +106,10 @@
         .playlist-overlay iframe {
             position: absolute;
             inset: 0;
-            width: 100% !important;
-            height: 100% !important;
+            width: 100% !important; 
+            height: 400px !important;
             max-height: 100% !important;
-            min-height: 100% !important;
+            min-height: 400px !important;
             display: block;
             border-radius: 6px;
             border: none;
@@ -292,6 +298,11 @@
                 --cover-overlay-bottom: 3.5%;
             }
 
+            .playlist-overlay iframe {
+                height: 350px !important;
+                min-height: 350px !important;
+            }
+
             .cassette-section {
                 max-width: 400px;
             }
@@ -312,6 +323,11 @@
                 --cover-overlay-top: 16.5%;
                 --cover-overlay-side: 1.8%;
                 --cover-overlay-bottom: 4%;
+            }
+
+            .playlist-overlay iframe {
+                height: 350px !important;
+                min-height: 350px !important;
             }
 
             .container__paragraph {
@@ -427,6 +443,7 @@
         let playlistInput = document.getElementById("playlist-input");
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
+        let cassetteCover = document.querySelector(".cassette-cover");
         let shareFeedback = document.getElementById("share-feedback");
         let playerStatus = document.getElementById("player-status");
 
@@ -577,6 +594,7 @@
                 return;
             }
             playlistOverlay.style.display = 'block';
+            cassetteCover.classList.add('is-blurred');
             startAnimation();
             setPlayerStatus("Playing");
 
@@ -602,6 +620,7 @@
             movePauseBtn.reverse();
 
             playlistOverlay.style.display = 'none';
+            cassetteCover.classList.remove('is-blurred');
             resetAnimation();
             setPlayerStatus("Stopped");
             sendSpotifyCommand('pause');
