@@ -22,7 +22,7 @@
         .main-container {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: flex-end;
             gap: 40px;
             margin: 40px 0;
             flex-wrap: wrap;
@@ -198,8 +198,8 @@
             }
 
             .cassette-section {
-                max-width: 350px;
-                width: 100%;
+                max-width: 320px;
+                width: calc(100vw - 32px);
             }
 
             .playlist-overlay {
@@ -210,6 +210,9 @@
             }
 
             .cassette-cover {
+                width: 100%;
+                max-width: 320px;
+                height: auto;
                 border-radius: 6px;
             }
         }
@@ -217,7 +220,7 @@
 </head>
 <body>
     <div class="container">
-        <h2 class="container__header">Your Mix Taps</h2>
+        <h2 class="container__header">Your Mix Tape</h2>
         <p class="container__paragraph">Paste the URL of a Spotify playlist in the field below and click play on the Walkman!</p>
         <div id="form">
             <input class="form__input" type="text" id="playlist-input" placeholder="https://open.spotify.com/playlist/..." />
