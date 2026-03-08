@@ -115,6 +115,12 @@
             border: none;
         }
 
+        .cassette-section.provider-youtube .playlist-overlay iframe {
+            height: 100% !important;
+            min-height: 100% !important;
+            max-height: 100% !important;
+        }
+
         #walkman {
             width: 100%;
             max-width: 800px;
@@ -480,6 +486,17 @@
                 min-height: 350px !important;
             }
 
+            .cassette-section.provider-youtube .playlist-overlay {
+                top: 4%;
+                bottom: 31%;
+            }
+
+            .cassette-section.provider-youtube .playlist-overlay iframe {
+                transform: translateY(-13%);
+                height: 124% !important;
+                min-height: 124% !important;
+            }
+
             .main-container {
                 position: relative;
             }
@@ -566,6 +583,17 @@
             .playlist-overlay iframe {
                 height: 350px !important;
                 min-height: 350px !important;
+            }
+
+            .cassette-section.provider-youtube .playlist-overlay {
+                top: 3%;
+                bottom: 33%;
+            }
+
+            .cassette-section.provider-youtube .playlist-overlay iframe {
+                transform: translateY(-15%);
+                height: 128% !important;
+                min-height: 128% !important;
             }
 
             .container__paragraph {
@@ -831,6 +859,7 @@
             if (!source) {
                 setPlayReadyState(false);
                 currentProvider = null;
+                cassetteSection.classList.remove('provider-spotify', 'provider-youtube');
                 if (showFeedback) {
                     setShareFeedback("Use a valid Spotify or YouTube link.", "error");
                 }
@@ -845,6 +874,8 @@
             localStorage.setItem('mixtapePlaylistUrl', url);
             setPlayReadyState(true);
             currentProvider = source.provider;
+            cassetteSection.classList.toggle('provider-youtube', source.provider === 'youtube');
+            cassetteSection.classList.toggle('provider-spotify', source.provider === 'spotify');
             shareBtn.disabled = false;
             if (showFeedback) {
                 const providerLabel = source.provider === 'youtube' ? 'YouTube' : 'Spotify';
