@@ -284,11 +284,6 @@
             display: none;
         }
 
-        .play-callout:focus-visible {
-            outline: 2px dashed rgba(31, 31, 31, 0.7);
-            outline-offset: 6px;
-        }
-
         #rumble-tooltip {
             opacity: 0;
             pointer-events: none;
@@ -929,21 +924,10 @@
         let soundCloudWidget = null;
         const soundCloudOEmbedCache = new Map();
         const mobilePanelMedia = window.matchMedia('(max-width: 700px)');
-        const playHintStorageKey = 'mixtapePlayHintDismissed';
 
-        function dismissPlayCallout(persist = true) {
+        function syncPlayCalloutVisibility(isPlaying) {
             if (!playCallout) return;
-            playCallout.classList.add('is-hidden');
-            playCallout.setAttribute('aria-hidden', 'true');
-            if (persist) {
-                localStorage.setItem(playHintStorageKey, 'true');
-            }
-        }
-
-        function syncPlayCalloutVisibility(isReady = isPlaylistReady) {
-            if (!playCallout) return;
-            const isDismissed = localStorage.getItem(playHintStorageKey) === 'true';
-            const shouldHide = !isReady || isDismissed;
+            const shouldHide = !!isPlaying;
             playCallout.classList.toggle('is-hidden', shouldHide);
             playCallout.setAttribute('aria-hidden', shouldHide ? 'true' : 'false');
         }
@@ -962,6 +946,7 @@
             if (state === "Playing") {
                 playerStatus.classList.add("playing");
             }
+            syncPlayCalloutVisibility(state === "Playing");
         }
 
         function stripEmoji(text) {
@@ -1145,7 +1130,6 @@
             if (!isReady) {
                 playBtn.classList.remove('play-active');
             }
-            syncPlayCalloutVisibility(isReady);
         }
 
         function setPlayActiveState(isActive) {
@@ -1224,7 +1208,6 @@
 
         // Set playlist from URL or default
         playlistInput.value = getPlaylistFromURL();
-        syncPlayCalloutVisibility(false);
         if (playlistInput.value.trim()) {
             loadPlaylistFromInput(false);
         }
@@ -1462,7 +1445,6 @@
             movePlayBtn.play();
             movePauseBtn.reverse();
             moveStopBtn.reverse();
-            dismissPlayCallout();
 
             if (!isPlaylistReady) {
                 setShareFeedback("Press Load first, then press play.", "error");
