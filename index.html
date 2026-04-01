@@ -1058,6 +1058,30 @@
             }
         }
 
+        function buildCanonicalUrl(source) {
+            if (!source) return "";
+
+            if (source.provider === 'spotify') {
+                return `https://open.spotify.com/${source.kind}/${source.id}`;
+            }
+
+            if (source.provider === 'soundcloud') {
+                return source.url;
+            }
+
+            return "";
+        }
+
+        function normalizeMediaUrl(url) {
+            const source = parseMediaSource(url);
+            if (!source) return null;
+
+            return {
+                source,
+                canonicalUrl: buildCanonicalUrl(source)
+            };
+        }
+
         function parseMediaSource(url) {
             if (!url) return null;
 
@@ -1130,7 +1154,9 @@
 
         function loadPlaylistFromInput(showFeedback = true) {
             const url = playlistInput.value.trim();
-            const source = parseMediaSource(url);
+            const normalizedMedia = normalizeMediaUrl(url);
+            const source = normalizedMedia ? normalizedMedia.source : null;
+            const canonicalUrl = normalizedMedia ? normalizedMedia.canonicalUrl : "";
 
             if (!source) {
                 setPlayReadyState(false);
@@ -1152,12 +1178,13 @@
             widget.style.width = '100%';
             widget.style.height = '100%';
             widget.style.minHeight = '100%';
-            localStorage.setItem('mixtapePlaylistUrl', url);
+            playlistInput.value = canonicalUrl;
+            localStorage.setItem('mixtapePlaylistUrl', canonicalUrl);
             setPlayReadyState(true);
             currentProvider = source.provider;
             cassetteSection.classList.toggle('provider-soundcloud', source.provider === 'soundcloud');
             cassetteSection.classList.toggle('provider-spotify', source.provider === 'spotify');
-            refreshWalkmanTitle(url, source);
+            refreshWalkmanTitle(canonicalUrl, source);
             shareBtn.disabled = false;
             if (showFeedback) {
                 const providerLabel = source.provider === 'soundcloud' ? 'SoundCloud' : 'Spotify';
@@ -1529,8 +1556,10 @@
 
         shareBtn.addEventListener('click', async function() {
             const playlistUrl = playlistInput.value.trim();
-            if (parseMediaSource(playlistUrl)) {
-                const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(playlistUrl)}`;
+            const normalizedMedia = normalizeMediaUrl(playlistUrl);
+            if (normalizedMedia) {
+                const canonicalUrl = normalizedMedia.canonicalUrl;
+                const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(canonicalUrl)}`;
                 const shareData = {
                     title: 'Mixtape Machine',
                     text: 'Listen to this mix tape.',
