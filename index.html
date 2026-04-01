@@ -127,6 +127,90 @@
             z-index: 2;
         }
 
+        .recent-mixes {
+            position: absolute;
+            top: 58px;
+            left: 18px;
+            right: 18px;
+            bottom: 18px;
+            background: #ffffff;
+            border: var(--outline);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow: auto;
+            z-index: 1;
+        }
+
+        .recent-mixes.is-hidden {
+            display: none;
+        }
+
+        .recent-mixes__title {
+            margin: 0;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #111111;
+        }
+
+        .recent-mixes__empty {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.98rem;
+            line-height: 1.5;
+            max-width: 34ch;
+        }
+
+        .recent-mixes__list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .recent-mix {
+            width: 100%;
+            text-align: left;
+            border: var(--outline);
+            background: var(--panel-soft);
+            box-shadow: 4px 4px 0 #111111;
+            padding: 12px 14px;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .recent-mix:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 #111111;
+        }
+
+        .recent-mix:active {
+            transform: translate(1px, 1px);
+            box-shadow: 2px 2px 0 #111111;
+        }
+
+        .recent-mix__eyebrow {
+            display: block;
+            margin-bottom: 4px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #5a554f;
+        }
+
+        .recent-mix__title {
+            display: block;
+            color: #111111;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 1.02rem;
+            line-height: 1.2;
+        }
+
         .playlist-overlay iframe {
             position: absolute;
             inset: 0;
@@ -564,24 +648,6 @@
             color: var(--accent-deep);
         }
 
-        .player-status {
-            margin: 0;
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: #111111;
-            padding: 10px 14px;
-            background: #ffffff;
-            border: var(--outline);
-            box-shadow: 4px 4px 0 #111111;
-            font-family: 'Space Mono', monospace;
-        }
-
-        .player-status.playing {
-            color: #176f3d;
-        }
-
         .side-cta {
             margin: 16px 0 0;
             display: inline-block;
@@ -805,6 +871,14 @@
                 bottom: 12px;
             }
 
+            .recent-mixes {
+                top: 54px;
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
+                padding: 14px;
+            }
+
             body {
                 padding-left: 14px;
                 padding-right: 14px;
@@ -824,7 +898,6 @@
             </div>
             <div class="meta-row">
                 <p class="share-feedback" id="share-feedback">Paste a link, then hit play or share.</p>
-                <p class="player-status" id="player-status">Stopped</p>
             </div>
         </div>
 
@@ -876,6 +949,11 @@
                 <div class="cassette-container">
                     <button class="panel-close" id="panel-close-button" type="button">Close</button>
                     <div class="cassette-art">
+                        <div class="recent-mixes" id="recent-mixes">
+                            <p class="recent-mixes__title">Recent Mixes</p>
+                            <div class="recent-mixes__list" id="recent-mixes-list"></div>
+                            <p class="recent-mixes__empty" id="recent-mixes-empty">Load a Spotify or SoundCloud link and your recent mixes will show up here for this session.</p>
+                        </div>
                         <div class="playlist-overlay" id="playlist-overlay">
                             <iframe id="widget" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
                         </div>
@@ -906,12 +984,14 @@
         let playlistInput = document.getElementById("playlist-input");
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
+        let recentMixes = document.getElementById("recent-mixes");
+        let recentMixesList = document.getElementById("recent-mixes-list");
+        let recentMixesEmpty = document.getElementById("recent-mixes-empty");
         let cassetteArt = document.querySelector(".cassette-art");
         let walkmanSvg = document.getElementById("walkman");
         let walkmanDedication = document.getElementById("walkman-dedication");
         let walkmanTitle = document.getElementById("walkman-title");
         let shareFeedback = document.getElementById("share-feedback");
-        let playerStatus = document.getElementById("player-status");
         let isPlaylistReady = false;
         let currentProvider = null;
         let rumbleTimer = null;
@@ -924,6 +1004,7 @@
         let soundCloudWidget = null;
         const soundCloudOEmbedCache = new Map();
         const mobilePanelMedia = window.matchMedia('(max-width: 700px)');
+        const recentMixesStorageKey = 'mixtapeRecentMixes';
 
         function syncPlayCalloutVisibility(isPlaying) {
             if (!playCallout) return;
@@ -941,11 +1022,6 @@
         }
 
         function setPlayerStatus(state) {
-            playerStatus.textContent = state;
-            playerStatus.classList.remove("playing");
-            if (state === "Playing") {
-                playerStatus.classList.add("playing");
-            }
             syncPlayCalloutVisibility(state === "Playing");
         }
 
@@ -972,6 +1048,81 @@
             }
             walkmanTitle.textContent = cleanTitle;
             walkmanDedication.classList.add('is-visible');
+        }
+
+        function getRecentMixes() {
+            try {
+                const raw = sessionStorage.getItem(recentMixesStorageKey);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function setRecentMixes(items) {
+            sessionStorage.setItem(recentMixesStorageKey, JSON.stringify(items));
+        }
+
+        function buildRecentMixLabel(item) {
+            if (item.title) return stripEmoji(item.title);
+            return stripEmoji(item.url);
+        }
+
+        function saveRecentMix(item) {
+            const normalized = {
+                url: item.url,
+                provider: item.provider,
+                title: stripEmoji(item.title || "")
+            };
+            const nextItems = getRecentMixes()
+                .filter((entry) => entry.url !== normalized.url);
+            nextItems.unshift(normalized);
+            setRecentMixes(nextItems.slice(0, 5));
+        }
+
+        async function loadRecentMix(url) {
+            playlistInput.value = url;
+            const loaded = await loadPlaylistFromInput(true);
+            if (loaded) {
+                triggerLoadBounce();
+            }
+        }
+
+        function renderRecentMixes() {
+            const items = getRecentMixes();
+            recentMixesList.innerHTML = '';
+            recentMixesEmpty.style.display = items.length ? 'none' : 'block';
+
+            items.forEach((item) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'recent-mix';
+
+                const eyebrow = document.createElement('span');
+                eyebrow.className = 'recent-mix__eyebrow';
+                eyebrow.textContent = item.provider === 'soundcloud' ? 'SoundCloud' : 'Spotify';
+
+                const title = document.createElement('span');
+                title.className = 'recent-mix__title';
+                title.textContent = buildRecentMixLabel(item);
+
+                button.appendChild(eyebrow);
+                button.appendChild(title);
+                button.addEventListener('click', function() {
+                    loadRecentMix(item.url);
+                });
+
+                recentMixesList.appendChild(button);
+            });
+        }
+
+        function showRecentMixesPanel() {
+            recentMixes.classList.remove('is-hidden');
+        }
+
+        function hideRecentMixesPanel() {
+            recentMixes.classList.add('is-hidden');
         }
 
         function extractSoundCloudIframeSrc(html) {
@@ -1188,6 +1339,12 @@
             cassetteSection.classList.toggle('provider-soundcloud', source.provider === 'soundcloud');
             cassetteSection.classList.toggle('provider-spotify', source.provider === 'spotify');
             refreshWalkmanTitle(canonicalUrl, source, soundCloudData ? soundCloudData.title : "");
+            saveRecentMix({
+                url: canonicalUrl,
+                provider: source.provider,
+                title: soundCloudData ? soundCloudData.title : ""
+            });
+            renderRecentMixes();
             shareBtn.disabled = false;
             if (showFeedback) {
                 const providerLabel = source.provider === 'soundcloud' ? 'SoundCloud' : 'Spotify';
@@ -1208,6 +1365,8 @@
 
         // Set playlist from URL or default
         playlistInput.value = getPlaylistFromURL();
+        renderRecentMixes();
+        showRecentMixesPanel();
         if (playlistInput.value.trim()) {
             loadPlaylistFromInput(false);
         }
@@ -1260,6 +1419,7 @@
             let url = playlistInput.value.trim();
             setPlayReadyState(false);
             setWalkmanTitle("");
+            showRecentMixesPanel();
             if (url.length > 0) {
                 setShareFeedback("Press Load to prepare this link.", "");
             } else {
@@ -1385,6 +1545,7 @@
         function showNowPlayingSurface() {
             playlistOverlay.style.display = 'block';
             cassetteArt.classList.add('is-active');
+            hideRecentMixesPanel();
             openNowPlayingPanel();
         }
 
@@ -1401,6 +1562,7 @@
         function hideNowPlayingSurface() {
             playlistOverlay.style.display = 'none';
             cassetteArt.classList.remove('is-active');
+            showRecentMixesPanel();
             closeNowPlayingPanel();
         }
 
