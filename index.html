@@ -53,6 +53,8 @@
         .player-section {
             flex: 1;
             min-width: 300px;
+            position: relative;
+            z-index: 3;
         }
 
         .cassette-section {
@@ -172,6 +174,88 @@
             letter-spacing: 0.8px;
             pointer-events: auto;
             cursor: pointer;
+        }
+
+        .play-callout {
+            position: absolute;
+            top: -38px;
+            left: 24%;
+            z-index: 20;
+            border: none;
+            background: transparent;
+            padding: 0;
+            color: #1f1f1f;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 28px;
+            line-height: 1;
+            cursor: pointer;
+            transform-origin: center bottom;
+            animation: playCalloutBounce 1.7s ease-in-out infinite;
+        }
+
+        .walkman-dedication {
+            position: absolute;
+            top: 112px;
+            left: 50%;
+            z-index: 6;
+            transform: translateX(-50%);
+            width: min(70%, 430px);
+            min-height: 68px;
+            padding: 10px 18px 12px;
+            border-radius: 18px 18px 22px 22px;
+            background: linear-gradient(180deg, rgba(247, 213, 86, 0.9), rgba(240, 180, 42, 0.92));
+            border: 2px solid rgba(109, 82, 14, 0.28);
+            box-shadow: inset 0 2px 0 rgba(255, 248, 209, 0.65), 0 2px 0 rgba(120, 87, 10, 0.12);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+            pointer-events: none;
+        }
+
+        .walkman-dedication.is-visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        .walkman-dedication__label {
+            margin: 0;
+            color: rgba(87, 61, 6, 0.82);
+            font-family: 'Muli', sans-serif;
+            font-size: 0.66rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .walkman-dedication__text {
+            margin: 0;
+            color: #1f1f1f;
+            font-family: 'Permanent Marker', cursive;
+            font-size: clamp(0.95rem, 1.75vw, 1.35rem);
+            line-height: 1.08;
+            text-align: center;
+            text-wrap: balance;
+        }
+
+        .play-callout::after {
+            content: "↓";
+            display: block;
+            margin-top: 6px;
+            font-size: 34px;
+            line-height: 0.85;
+            text-align: center;
+        }
+
+        .play-callout.is-hidden {
+            display: none;
+        }
+
+        .play-callout:focus-visible {
+            outline: 2px dashed rgba(31, 31, 31, 0.7);
+            outline-offset: 6px;
         }
 
         #rumble-tooltip {
@@ -359,6 +443,24 @@
             100% {
                 stroke-width: 4;
                 filter: drop-shadow(0 0 3px rgba(255, 79, 164, 0.45));
+            }
+        }
+
+        @keyframes playCalloutBounce {
+            0%, 100% {
+                transform: translate3d(0, 0, 0) rotate(-3deg);
+            }
+            20% {
+                transform: translate3d(0, -3px, 0) rotate(-1deg);
+            }
+            35% {
+                transform: translate3d(-1px, 1px, 0) rotate(-4deg);
+            }
+            55% {
+                transform: translate3d(1px, -4px, 0) rotate(1deg);
+            }
+            75% {
+                transform: translate3d(-1px, 0, 0) rotate(-2deg);
             }
         }
 
@@ -627,6 +729,24 @@
                 border-radius: 6px;
             }
 
+            .play-callout {
+                top: -28px;
+                left: 18%;
+                font-size: 24px;
+            }
+
+            .play-callout::after {
+                font-size: 30px;
+            }
+
+            .walkman-dedication__label {
+                font-size: 0.54rem;
+            }
+
+            .walkman-dedication__text {
+                font-size: clamp(0.8rem, 3vw, 0.98rem);
+            }
+
             #walkman {
                 display: block;
                 width: 100%;
@@ -652,7 +772,7 @@
         <div id="form">
             <input class="form__input" type="text" id="playlist-input" placeholder="Spotify or YouTube Music URL..." />
             <div class="button-row">
-                <button class="share-button load-button" id="load-button">Load</button>
+                <button class="share-button load-button" id="load-button">Load Playlist</button>
                 <button class="share-button" id="share-button">Share This Mixtape</button>
             </div>
             <div class="meta-row">
@@ -663,6 +783,11 @@
 
         <div class="main-container">
             <div class="player-section">
+                <div class="walkman-dedication" id="walkman-dedication" aria-live="polite">
+                    <p class="walkman-dedication__label">Dedication</p>
+                    <p class="walkman-dedication__text" id="walkman-title"></p>
+                </div>
+                <button class="play-callout" id="play-callout" type="button" aria-label="Dismiss play hint">play</button>
                 <svg id="walkman" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-20 0 500 400">
             <style>.st0{fill:#fabf2e}.st1{fill:#2e2e2e}.st2{fill:#d1d3d4}.st3{fill:#fff}.st4{fill:#a7a9ac}.st5{clip-path:url(#SVGID_3_)}.st6{clip-path:url(#SVGID_4_)}.st7{clip-path:url(#SVGID_7_)}.st8{clip-path:url(#SVGID_8_)}.st9{fill:#3a3b3a}.st10{fill:#818182}.st11{fill:#e6e7e8}.st12{fill:#fff;stroke:#58595b;stroke-width:3;stroke-miterlimit:10}.st13{fill:#58595b}.st14{fill:#6d6e71}.st15{fill:#7b7b7b}.st16{fill:#cdd0d6}.st17{fill:#414042}.st18{fill:#cccdce}.st19{fill:#f9be2c}</style>
             <g id="wbody"><path class="st0" d="M424.1 392H35c-19.3 0-35-15.7-35-35V102.8c0-19.3 15.7-35 35-35h389.1c19.3 0 35 15.7 35 35V357c0 19.3-15.7 35-35 35z"/><path class="st1" d="M424.1 392H35c-19.3 0-35-15.7-35-35v-39.5c0-3.9 2.8-7.2 6.6-7.9l32.1-5.8c7.3-1.3 13.2-6.5 15.5-13.5l29.5-87.7c3.5-10.7 13.5-17.9 24.7-17.9h242.4c11.2 0 21.2 7.2 24.7 17.9l29.5 87.7c2.3 7 8.2 12.2 15.5 13.5l32.1 5.8c3.8.7 6.6 4 6.6 7.9V357c-.1 19.3-15.8 35-35.1 35z"/><path class="st2" d="M95.9 333.3c-6 0-11.5-2.7-15.3-7.4s-5.1-10.7-3.7-16.5l18.7-80.6c2.1-8.9 9.9-15.1 19-15.1h229.9c9.1 0 16.9 6.2 19 15.1l18.7 80.6c1.4 5.8 0 11.9-3.7 16.5s-9.3 7.4-15.3 7.4H95.9z"/><path d="M114.6 216.2h229.9c7.9 0 14.8 5.5 16.6 13.2l18.7 80.6c2.5 10.7-5.6 20.8-16.6 20.8H95.9c-10.9 0-19-10.2-16.6-20.8L98 229.3c1.8-7.7 8.7-13.1 16.6-13.1m0-5c-10.3 0-19.1 7-21.4 17l-18.7 80.6c-1.5 6.6 0 13.4 4.2 18.7 4.2 5.3 10.5 8.3 17.2 8.3h267.4c6.7 0 13-3 17.2-8.3 4.2-5.3 5.7-12.1 4.2-18.7L366 228.2c-2.3-10-11.1-17-21.4-17h-230z"/>
@@ -720,6 +845,7 @@
         let pauseBtn = document.getElementById("pausebutton");
         let stopBtn = document.getElementById("stopbutton");
         let forwardBtn = document.getElementById("forwardbutton");
+        let playCallout = document.getElementById("play-callout");
         let rumbleToggle = document.getElementById("rumble-toggle");
         let rumbleHint = document.getElementById("rumble-hint");
         let rumbleTooltip = document.getElementById("rumble-tooltip");
@@ -733,6 +859,8 @@
         let playlistOverlay = document.getElementById("playlist-overlay");
         let cassetteCover = document.querySelector(".cassette-cover");
         let walkmanSvg = document.getElementById("walkman");
+        let walkmanDedication = document.getElementById("walkman-dedication");
+        let walkmanTitle = document.getElementById("walkman-title");
         let shareFeedback = document.getElementById("share-feedback");
         let playerStatus = document.getElementById("player-status");
         let isPlaylistReady = false;
@@ -744,6 +872,23 @@
         let rumbleTapFlashTimer = null;
         let isNowPlayingPanelOpen = false;
         const mobilePanelMedia = window.matchMedia('(max-width: 700px)');
+        const playHintStorageKey = 'mixtapePlayHintDismissed';
+
+        function dismissPlayCallout(persist = true) {
+            if (!playCallout) return;
+            playCallout.classList.add('is-hidden');
+            playCallout.setAttribute('aria-hidden', 'true');
+            if (persist) {
+                localStorage.setItem(playHintStorageKey, 'true');
+            }
+        }
+
+        function restorePlayCallout() {
+            if (!playCallout) return;
+            const isDismissed = localStorage.getItem(playHintStorageKey) === 'true';
+            playCallout.classList.toggle('is-hidden', isDismissed);
+            playCallout.setAttribute('aria-hidden', isDismissed ? 'true' : 'false');
+        }
 
         function setShareFeedback(message, type = "") {
             shareFeedback.textContent = message;
@@ -758,6 +903,58 @@
             playerStatus.classList.remove("playing");
             if (state === "Playing") {
                 playerStatus.classList.add("playing");
+            }
+        }
+
+        function buildFallbackTitle(source) {
+            if (!source) return "";
+            const kindLabel = source.kind.charAt(0).toUpperCase() + source.kind.slice(1);
+            const providerLabel = source.provider === 'youtube' ? 'YouTube' : 'Spotify';
+            return `${providerLabel} ${kindLabel}`;
+        }
+
+        function setWalkmanTitle(title) {
+            const cleanTitle = (title || "").trim();
+            if (!cleanTitle) {
+                walkmanTitle.textContent = "";
+                walkmanDedication.classList.remove('is-visible');
+                return;
+            }
+            walkmanTitle.textContent = cleanTitle;
+            walkmanDedication.classList.add('is-visible');
+        }
+
+        async function fetchMediaTitle(url, source) {
+            const fallbackTitle = buildFallbackTitle(source);
+
+            try {
+                if (source.provider === 'spotify') {
+                    const response = await fetch(`https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return (data.title || fallbackTitle).trim();
+                    }
+                }
+
+                if (source.provider === 'youtube') {
+                    const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        return (data.title || fallbackTitle).trim();
+                    }
+                }
+            } catch (error) {
+                console.log('Metadata lookup failed');
+            }
+
+            return fallbackTitle;
+        }
+
+        async function refreshWalkmanTitle(url, source) {
+            setWalkmanTitle(buildFallbackTitle(source));
+            const title = await fetchMediaTitle(url, source);
+            if (playlistInput.value.trim() === url) {
+                setWalkmanTitle(title);
             }
         }
 
@@ -859,6 +1056,7 @@
             if (!source) {
                 setPlayReadyState(false);
                 currentProvider = null;
+                setWalkmanTitle("");
                 cassetteSection.classList.remove('provider-spotify', 'provider-youtube');
                 if (showFeedback) {
                     setShareFeedback("Use a valid Spotify or YouTube link.", "error");
@@ -876,6 +1074,7 @@
             currentProvider = source.provider;
             cassetteSection.classList.toggle('provider-youtube', source.provider === 'youtube');
             cassetteSection.classList.toggle('provider-spotify', source.provider === 'spotify');
+            refreshWalkmanTitle(url, source);
             shareBtn.disabled = false;
             if (showFeedback) {
                 const providerLabel = source.provider === 'youtube' ? 'YouTube' : 'Spotify';
@@ -895,11 +1094,12 @@
             if (savedPlaylist) {
                 return savedPlaylist;
             }
-            return "https://open.spotify.com/playlist/5TZkls9cEOzWDR6qCxwDot";
+            return "https://open.spotify.com/album/31TKYpO01dIZRUo8rypDSD?si=6OGZsXgmQgqlPZ0ak5sE1Q";
         }
 
         // Set playlist from URL or default
         playlistInput.value = getPlaylistFromURL();
+        restorePlayCallout();
         loadPlaylistFromInput(false);
 
         // GSAP animations
@@ -949,6 +1149,7 @@
         function updatePlaylistFromInput() {
             let url = playlistInput.value.trim();
             setPlayReadyState(false);
+            setWalkmanTitle("");
             if (url.length > 0) {
                 setShareFeedback("Press Load to prepare this link.", "");
             } else {
@@ -980,6 +1181,21 @@
                     onComplete: () => gsap.set(walkmanSvg, { x: 0, y: 0 })
                 }
             );
+        }
+
+        function triggerLoadBounce() {
+            gsap.killTweensOf(walkmanSvg);
+            gsap.timeline()
+                .to(walkmanSvg, {
+                    y: -14,
+                    duration: 0.16,
+                    ease: "power2.out"
+                })
+                .to(walkmanSvg, {
+                    y: 0,
+                    duration: 0.24,
+                    ease: "bounce.out"
+                });
         }
 
         function setRumbleState(enabled) {
@@ -1114,6 +1330,7 @@
             movePlayBtn.play();
             movePauseBtn.reverse();
             moveStopBtn.reverse();
+            dismissPlayCallout();
 
             if (!isPlaylistReady) {
                 setShareFeedback("Press Load first, then press play.", "error");
@@ -1160,6 +1377,10 @@
 
         forwardBtn.onclick = function() {
             setShareFeedback("Fast-forward is not mapped yet. Use play, pause, stop, and share.", "error");
+        }
+
+        playCallout.onclick = function() {
+            dismissPlayCallout();
         }
 
         rumbleToggle.onclick = function() {
@@ -1231,7 +1452,9 @@
 
         // Share functionality
         loadBtn.addEventListener('click', function() {
-            loadPlaylistFromInput(true);
+            if (loadPlaylistFromInput(true)) {
+                triggerLoadBounce();
+            }
         });
 
         shareBtn.addEventListener('click', function() {
@@ -1254,7 +1477,9 @@
         playlistInput.addEventListener('input', updatePlaylistFromInput);
         playlistInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                loadPlaylistFromInput(true);
+                if (loadPlaylistFromInput(true)) {
+                    triggerLoadBounce();
+                }
                 if (playlistOverlay.style.display === 'block') {
                     startAnimation();
                 }
