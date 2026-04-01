@@ -92,17 +92,17 @@
         .cassette-art::before {
             content: "NOW PLAYING";
             position: absolute;
-            top: 18px;
-            left: 18px;
+            top: 14px;
+            left: 14px;
             z-index: 3;
-            padding: 10px 14px 8px;
+            padding: 6px 10px 5px;
             background: var(--sun);
             border: var(--outline);
-            box-shadow: 5px 5px 0 #111111;
+            box-shadow: 4px 4px 0 #111111;
             font-family: 'Space Mono', monospace;
-            font-size: 0.82rem;
+            font-size: 0.64rem;
             font-weight: 700;
-            letter-spacing: 0.18em;
+            letter-spacing: 0.14em;
         }
 
         .cassette-art.is-active::after {
@@ -115,7 +115,7 @@
 
         .playlist-overlay {
             position: absolute;
-            top: 84px;
+            top: 58px;
             left: 18px;
             right: 18px;
             bottom: 18px;
@@ -582,20 +582,6 @@
             color: #176f3d;
         }
 
-        .cover-note {
-            margin: 16px 0 0;
-            padding: 12px 14px;
-            display: inline-block;
-            font-family: 'Space Mono', monospace;
-            letter-spacing: 0.08em;
-            color: #111111;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            background: #ffffff;
-            border: var(--outline);
-            box-shadow: 5px 5px 0 #111111;
-        }
-
         .side-cta {
             margin: 16px 0 0;
             display: inline-block;
@@ -713,11 +699,6 @@
                 min-height: 380px;
             }
 
-            .cover-note {
-                display: inline-block;
-                margin-top: 12px;
-            }
-
             .panel-close {
                 display: none;
             }
@@ -814,7 +795,7 @@
             }
 
             .playlist-overlay {
-                top: 74px;
+                top: 54px;
                 left: 12px;
                 right: 12px;
                 bottom: 12px;
@@ -891,7 +872,6 @@
                             <iframe id="widget" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
                         </div>
                     </div>
-                    <p class="cover-note">Your current playlist.</p>
                 </div>
             </div>
         </div>
