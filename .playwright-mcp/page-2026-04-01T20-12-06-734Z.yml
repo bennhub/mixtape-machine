@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+  - heading "Mixtape Machine" [level=2] [ref=e3]
+  - paragraph [ref=e4]: Load a Spotify or SoundCloud link into the blocky sidecar panel, then hit play on the Walkman. The player stays classic. Everything around it gets the loud retro treatment.
+  - generic [ref=e5]:
+    - textbox "Spotify or SoundCloud URL..." [ref=e6]: https://soundcloud.com/official_njoy/m-a-a-d-city-eyewitness-njoy-2?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing
+    - generic [ref=e7]:
+      - button "Load Playlist" [ref=e8] [cursor=pointer]
+      - button "Share This Mixtape" [ref=e9] [cursor=pointer]
+    - generic [ref=e10]:
+      - paragraph [ref=e11]: Paste a link, then hit play or share.
+      - paragraph [ref=e12]: Stopped
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - generic:
+        - paragraph: Here's your mix
+        - paragraph: SoundCloud Track
+      - text: ↓
+      - img [ref=e15]:
+        - generic:
+          - button "Rumble help" [ref=e37] [cursor=pointer]: TAP x4
+          - generic: RUMBLE
+        - generic:
+          - generic: Tap RUMBLE 4+ times to set tempo.
+          - generic: Shake hits beat 1 every 4 beats.
+          - generic: Tap once while active to turn off.
+    - generic [ref=e47]:
+      - generic [ref=e48]: NOW PLAYING
+      - paragraph [ref=e49]: Your current playlist.
