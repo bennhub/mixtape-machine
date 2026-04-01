@@ -1,0 +1,28 @@
+- generic [ref=e2]:
+  - heading "Mixtape Machine" [level=2] [ref=e3]
+  - paragraph [ref=e4]: Load a Spotify or YouTube link into the blocky sidecar panel, then hit play on the Walkman. The player stays classic. Everything around it gets the loud retro treatment.
+  - generic [ref=e5]:
+    - textbox "Spotify or YouTube Music URL..." [ref=e6]: https://open.spotify.com/album/31TKYpO01dIZRUo8rypDSD?si=6OGZsXgmQgqlPZ0ak5sE1Q
+    - generic [ref=e7]:
+      - button "Load Playlist" [ref=e8] [cursor=pointer]
+      - button "Share This Mixtape" [ref=e9] [cursor=pointer]
+    - generic [ref=e10]:
+      - paragraph [ref=e11]: Paste a link, then hit play or share.
+      - paragraph [ref=e12]: Stopped
+  - generic [ref=e13]:
+    - generic [ref=e14]:
+      - generic:
+        - paragraph: Dedication
+        - paragraph: Spotify Album
+      - button "Dismiss play hint" [ref=e15] [cursor=pointer]: play ↓
+      - img [ref=e16]:
+        - generic:
+          - button "Rumble help" [ref=e38] [cursor=pointer]: TAP x4
+          - generic: RUMBLE
+        - generic:
+          - generic: Tap RUMBLE 4+ times to set tempo.
+          - generic: Shake hits beat 1 every 4 beats.
+          - generic: Tap once while active to turn off.
+    - generic [ref=e48]:
+      - generic [ref=e49]: NOW PLAYING
+      - paragraph [ref=e50]: Chunky panel loaded with your current mix.
