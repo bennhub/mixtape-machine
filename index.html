@@ -923,6 +923,7 @@
         let isNowPlayingPanelOpen = false;
         let shareButtonResetTimer = null;
         let soundCloudWidget = null;
+        const soundCloudOEmbedCache = new Map();
         const mobilePanelMedia = window.matchMedia('(max-width: 700px)');
         const playHintStorageKey = 'mixtapePlayHintDismissed';
 
@@ -984,6 +985,38 @@
             walkmanDedication.classList.add('is-visible');
         }
 
+        function extractSoundCloudIframeSrc(html) {
+            if (!html) return "";
+            const match = html.match(/src="([^"]+)"/i);
+            return match ? match[1] : "";
+        }
+
+        async function getSoundCloudOEmbed(url) {
+            const cacheKey = (url || "").trim();
+            if (!cacheKey) return null;
+
+            if (soundCloudOEmbedCache.has(cacheKey)) {
+                return soundCloudOEmbedCache.get(cacheKey);
+            }
+
+            try {
+                const response = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(cacheKey)}`);
+                if (!response.ok) {
+                    return null;
+                }
+
+                const data = await response.json();
+                const resolved = {
+                    title: stripEmoji(data.title || ""),
+                    embedUrl: extractSoundCloudIframeSrc(data.html || "")
+                };
+                soundCloudOEmbedCache.set(cacheKey, resolved);
+                return resolved;
+            } catch (error) {
+                return null;
+            }
+        }
+
         async function fetchMediaTitle(url, source) {
             const fallbackTitle = buildFallbackTitle(source);
 
@@ -997,10 +1030,9 @@
                 }
 
                 if (source.provider === 'soundcloud') {
-                    const response = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(url)}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        return stripEmoji(data.title || fallbackTitle);
+                    const soundCloudData = await getSoundCloudOEmbed(url);
+                    if (soundCloudData && soundCloudData.title) {
+                        return soundCloudData.title;
                     }
                 }
             } catch (error) {
@@ -1010,9 +1042,9 @@
             return fallbackTitle;
         }
 
-        async function refreshWalkmanTitle(url, source) {
+        async function refreshWalkmanTitle(url, source, preferredTitle = "") {
             setWalkmanTitle(buildFallbackTitle(source));
-            const title = await fetchMediaTitle(url, source);
+            const title = preferredTitle || await fetchMediaTitle(url, source);
             if (playlistInput.value.trim() === url) {
                 setWalkmanTitle(title);
             }
@@ -1064,6 +1096,14 @@
             const host = parsedUrl.hostname.replace(/^www\./, '');
             const isSoundCloudHost = host === 'soundcloud.com' || host === 'm.soundcloud.com' || host === 'on.soundcloud.com';
             if (isSoundCloudHost) {
+                if (host === 'on.soundcloud.com') {
+                    return {
+                        provider: 'soundcloud',
+                        kind: 'track',
+                        url: `${parsedUrl.origin}${parsedUrl.pathname}`
+                    };
+                }
+
                 const pathParts = parsedUrl.pathname.split('/').filter(Boolean);
                 let kind = 'track';
                 if (pathParts.includes('sets')) {
@@ -1081,7 +1121,7 @@
             return null;
         }
 
-        function buildEmbedUrl(source) {
+        function buildEmbedUrl(source, soundCloudEmbedUrl = "") {
             if (!source) return null;
 
             if (source.provider === 'spotify') {
@@ -1089,7 +1129,7 @@
             }
 
             if (source.provider === 'soundcloud') {
-                return `https://w.soundcloud.com/player/?url=${encodeURIComponent(source.url)}&color=%23ff7d7d&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
+                return soundCloudEmbedUrl || `https://w.soundcloud.com/player/?url=${encodeURIComponent(source.url)}&color=%23ff7d7d&auto_play=false&hide_related=false&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`;
             }
 
             return null;
@@ -1113,7 +1153,7 @@
             }
         }
 
-        function loadPlaylistFromInput(showFeedback = true) {
+        async function loadPlaylistFromInput(showFeedback = true) {
             const url = playlistInput.value.trim();
             const normalizedMedia = normalizeMediaUrl(url);
             const source = normalizedMedia ? normalizedMedia.source : null;
@@ -1131,7 +1171,21 @@
                 return false;
             }
 
-            const embedUrl = buildEmbedUrl(source);
+            let soundCloudData = null;
+            if (source.provider === 'soundcloud') {
+                soundCloudData = await getSoundCloudOEmbed(canonicalUrl);
+                if (!soundCloudData || !soundCloudData.embedUrl) {
+                    setPlayReadyState(false);
+                    currentProvider = null;
+                    soundCloudWidget = null;
+                    if (showFeedback) {
+                        setShareFeedback("That SoundCloud link could not be embedded.", "error");
+                    }
+                    return false;
+                }
+            }
+
+            const embedUrl = buildEmbedUrl(source, soundCloudData ? soundCloudData.embedUrl : "");
             widget.src = embedUrl;
             soundCloudWidget = source.provider === 'soundcloud' && window.SC && window.SC.Widget
                 ? window.SC.Widget(widget)
@@ -1145,7 +1199,7 @@
             currentProvider = source.provider;
             cassetteSection.classList.toggle('provider-soundcloud', source.provider === 'soundcloud');
             cassetteSection.classList.toggle('provider-spotify', source.provider === 'spotify');
-            refreshWalkmanTitle(canonicalUrl, source);
+            refreshWalkmanTitle(canonicalUrl, source, soundCloudData ? soundCloudData.title : "");
             shareBtn.disabled = false;
             if (showFeedback) {
                 const providerLabel = source.provider === 'soundcloud' ? 'SoundCloud' : 'Spotify';
@@ -1400,7 +1454,7 @@
         }
 
         // Event listeners
-        playBtn.onclick = function() {
+        playBtn.onclick = async function() {
             movePlayBtn.play();
             movePauseBtn.reverse();
             moveStopBtn.reverse();
@@ -1411,7 +1465,7 @@
                 return;
             }
             // Rehydrate player after a hard stop/unmount.
-            loadPlaylistFromInput(false);
+            await loadPlaylistFromInput(false);
             showNowPlayingSurface();
             scrollToPlaylistOnMobile();
             startAnimation();
@@ -1504,8 +1558,8 @@
         });
 
         // Share functionality
-        loadBtn.addEventListener('click', function() {
-            if (loadPlaylistFromInput(true)) {
+        loadBtn.addEventListener('click', async function() {
+            if (await loadPlaylistFromInput(true)) {
                 triggerLoadBounce();
             }
         });
@@ -1550,9 +1604,9 @@
 
         // Update playlist when input changes
         playlistInput.addEventListener('input', updatePlaylistFromInput);
-        playlistInput.addEventListener('keypress', function(e) {
+        playlistInput.addEventListener('keypress', async function(e) {
             if (e.key === 'Enter') {
-                if (loadPlaylistFromInput(true)) {
+                if (await loadPlaylistFromInput(true)) {
                     triggerLoadBounce();
                 }
                 if (playlistOverlay.style.display === 'block') {
