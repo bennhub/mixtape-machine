@@ -144,6 +144,10 @@
             max-height: 100% !important;
         }
 
+        .cassette-section.provider-spotify .playlist-overlay {
+            background: #000000;
+        }
+
         #walkman {
             width: 100%;
             max-width: 800px;
@@ -666,24 +670,8 @@
                 --offset-shadow: 6px 6px 0 #111111;
             }
 
-            body.mobile-panel-open {
-                overflow: hidden;
-            }
-
             #mobile-panel-scrim {
-                display: block;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.3);
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.25s ease;
-                z-index: 28;
-            }
-
-            #mobile-panel-scrim.open {
-                opacity: 1;
-                pointer-events: auto;
+                display: none;
             }
 
             .playlist-overlay iframe {
@@ -706,43 +694,23 @@
             }
 
             .cassette-section {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
+                position: static;
                 width: 100%;
                 max-width: none;
                 min-width: 0;
                 margin: 0;
-                z-index: 30;
-                transform: translateY(106%);
-                opacity: 0;
-                pointer-events: none;
-                transition: transform 0.28s ease, opacity 0.2s ease;
-            }
-
-            .cassette-section.now-playing-open {
-                position: fixed;
-                top: max(0px, env(safe-area-inset-top));
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-                width: auto;
-                transform: translateY(0);
                 opacity: 1;
                 pointer-events: auto;
             }
 
             .cassette-container {
-                height: 100%;
                 display: flex;
                 flex-direction: column;
                 padding: 12px;
             }
 
             .cassette-art {
-                flex: 1;
-                min-height: 0;
+                min-height: 380px;
             }
 
             .cover-note {
@@ -751,8 +719,7 @@
             }
 
             .panel-close {
-                display: inline-flex;
-                align-items: center;
+                display: none;
             }
 
             .share-button {
@@ -778,19 +745,6 @@
         }
 
         @media (max-width: 400px) {
-            .cassette-section {
-                left: 0;
-                right: 0;
-                width: 100%;
-            }
-
-            .cassette-section.now-playing-open {
-                top: max(0px, env(safe-area-inset-top));
-                left: 8px;
-                right: 8px;
-                bottom: 8px;
-            }
-
             .playlist-overlay iframe {
                 height: 350px !important;
                 min-height: 350px !important;
@@ -840,7 +794,7 @@
             }
 
             .walkman-dedication {
-                top: 84px;
+                top: 74px;
                 width: min(62%, 220px);
             }
 
@@ -1388,16 +1342,11 @@
 
         function openNowPlayingPanel() {
             if (!isMobilePanelView()) return;
-            cassetteSection.classList.add('now-playing-open');
-            mobilePanelScrim.classList.add('open');
-            document.body.classList.add('mobile-panel-open');
-            isNowPlayingPanelOpen = true;
+            isNowPlayingPanelOpen = false;
         }
 
         function closeNowPlayingPanel() {
             cassetteSection.classList.remove('now-playing-open');
-            mobilePanelScrim.classList.remove('open');
-            document.body.classList.remove('mobile-panel-open');
             isNowPlayingPanelOpen = false;
         }
 
@@ -1571,10 +1520,6 @@
             setShareFeedback("Now playing panel closed.", "");
         });
 
-        mobilePanelScrim.addEventListener('click', function() {
-            hideNowPlayingSurface();
-        });
-
         // Share functionality
         loadBtn.addEventListener('click', function() {
             if (loadPlaylistFromInput(true)) {
@@ -1641,12 +1586,8 @@
 
         mobilePanelMedia.addEventListener('change', function() {
             if (!isMobilePanelView()) {
-                mobilePanelScrim.classList.remove('open');
-                document.body.classList.remove('mobile-panel-open');
                 cassetteSection.classList.remove('now-playing-open');
                 isNowPlayingPanelOpen = false;
-            } else if (playerStatus.textContent === "Playing" && playlistOverlay.style.display === 'block') {
-                openNowPlayingPanel();
             }
         });
 
