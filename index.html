@@ -255,7 +255,11 @@
             line-height: 1.08;
             text-align: center;
             text-wrap: balance;
-            text-shadow: 0.6px 0.6px 0 rgba(113, 80, 7, 0.18);
+            -webkit-text-stroke: 1px rgba(255, 245, 214, 0.88);
+            paint-order: stroke fill;
+            text-shadow:
+                0.6px 0.6px 0 rgba(113, 80, 7, 0.18),
+                0 0 1px rgba(255, 245, 214, 0.6);
         }
 
         .play-callout::after {
@@ -963,6 +967,7 @@
         let rumbleBeatMs = null;
         let rumbleTapFlashTimer = null;
         let isNowPlayingPanelOpen = false;
+        let shareButtonResetTimer = null;
         let soundCloudWidget = null;
         const mobilePanelMedia = window.matchMedia('(max-width: 700px)');
         const playHintStorageKey = 'mixtapePlayHintDismissed';
@@ -1354,6 +1359,18 @@
             rumbleTooltip.classList.toggle('open', open);
         }
 
+        function flashShareButtonLabel(label, duration = 1400) {
+            if (shareButtonResetTimer) {
+                clearTimeout(shareButtonResetTimer);
+            }
+
+            shareBtn.textContent = label;
+            shareButtonResetTimer = setTimeout(() => {
+                shareBtn.textContent = 'Share This Mixtape';
+                shareButtonResetTimer = null;
+            }, duration);
+        }
+
         function isMobilePanelView() {
             return mobilePanelMedia.matches;
         }
@@ -1566,7 +1583,7 @@
                     url: shareUrl
                 };
 
-                if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+                if (isMobilePanelView() && navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
                     try {
                         await navigator.share(shareData);
                         setShareFeedback("Share panel opened. Send your mix anywhere.", "success");
@@ -1582,6 +1599,7 @@
                 try {
                     await navigator.clipboard.writeText(shareUrl);
                     setShareFeedback("Copied to clipboard. Ready to post.", "success");
+                    flashShareButtonLabel('Copied');
                 } catch (error) {
                     prompt('Copy this link to share your mixtape:', shareUrl);
                     setShareFeedback("Copy dialog opened. Share your mixtape link.", "success");
