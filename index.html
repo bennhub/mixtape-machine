@@ -324,7 +324,9 @@
         }
 
         .container__header {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
             width: fit-content;
             padding: 16px 22px 12px;
             background: var(--accent);
@@ -339,6 +341,39 @@
             text-transform: uppercase;
         }
 
+        .header-divider {
+            font-size: 0.56em;
+            line-height: 1;
+            transform: translateY(-1px);
+        }
+
+        .header-cta {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px 7px;
+            background: var(--sun);
+            color: #111111;
+            text-decoration: none;
+            border: 3px solid #111111;
+            box-shadow: 4px 4px 0 #111111;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.24em;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            line-height: 1;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .header-cta:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0 #111111;
+        }
+
+        .header-cta:active {
+            transform: translate(1px, 1px);
+            box-shadow: 2px 2px 0 #111111;
+        }
+
         .container__paragraph {
             color: var(--muted);
             max-width: 860px;
@@ -347,6 +382,15 @@
             line-height: 1.55;
             margin: 0;
             font-weight: 700;
+        }
+
+        .highlight-note {
+            display: inline;
+            padding: 0.08em 0.3em 0.02em;
+            color: #111111;
+            background: linear-gradient(180deg, transparent 18%, rgba(255, 225, 100, 0.96) 18%, rgba(255, 225, 100, 0.96) 90%, transparent 90%);
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
         }
 
         #form {
@@ -544,6 +588,33 @@
             box-shadow: 5px 5px 0 #111111;
         }
 
+        .side-cta {
+            margin: 16px 0 0;
+            display: inline-block;
+            padding: 14px 18px;
+            background: var(--sun);
+            color: #111111;
+            text-decoration: none;
+            border: var(--outline);
+            box-shadow: 6px 6px 0 #111111;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .side-cta:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 8px 8px 0 #111111;
+        }
+
+        .side-cta:active {
+            transform: translate(2px, 2px);
+            box-shadow: 3px 3px 0 #111111;
+        }
+
         .panel-close {
             display: none;
             position: absolute;
@@ -632,7 +703,7 @@
 
             .cassette-section {
                 position: fixed;
-                top: 86px;
+                top: 28px;
                 left: 10px;
                 right: 10px;
                 bottom: 10px;
@@ -680,6 +751,17 @@
                 max-width: none;
             }
 
+            .container__header {
+                gap: 10px;
+                padding-right: 14px;
+            }
+
+            .header-cta {
+                font-size: 0.28em;
+                padding: 7px 9px 6px;
+                box-shadow: 3px 3px 0 #111111;
+            }
+
             .meta-row {
                 justify-content: center;
                 text-align: center;
@@ -688,7 +770,7 @@
 
         @media (max-width: 400px) {
             .cassette-section {
-                top: 80px;
+                top: 24px;
                 left: 8px;
                 right: 8px;
                 bottom: 8px;
@@ -743,7 +825,7 @@
             }
 
             .walkman-dedication {
-                top: 94px;
+                top: 84px;
                 width: min(62%, 220px);
             }
 
@@ -778,8 +860,8 @@
 </head>
 <body>
     <div class="container">
-        <h2 class="container__header">Mixtape Machine</h2>
-        <p class="container__paragraph">Load a Spotify or SoundCloud link into the blocky sidecar panel, then hit play on the Walkman. The player stays classic. Everything around it gets the loud retro treatment.</p>
+        <h2 class="container__header">Mixtape Machine <span class="header-divider">|</span> <a class="header-cta" href="https://hayzer.app/" target="_blank" rel="noreferrer">Hayzer Apps</a></h2>
+        <p class="container__paragraph">Load a Spotify or SoundCloud link, then hit play on the Walkman. <span class="highlight-note">Click share to send your music out wrapped in this mixtape theme</span>, like passing around a tape made just for someone.</p>
         <div id="form">
             <input class="form__input" type="text" id="playlist-input" placeholder="Spotify or SoundCloud URL..." />
             <div class="button-row">
@@ -1091,17 +1173,15 @@
             if (sharedPlaylist) {
                 return decodeURIComponent(sharedPlaylist);
             }
-            const savedPlaylist = localStorage.getItem('mixtapePlaylistUrl');
-            if (savedPlaylist) {
-                return savedPlaylist;
-            }
-            return "https://open.spotify.com/album/31TKYpO01dIZRUo8rypDSD?si=6OGZsXgmQgqlPZ0ak5sE1Q";
+            return "";
         }
 
         // Set playlist from URL or default
         playlistInput.value = getPlaylistFromURL();
         restorePlayCallout();
-        loadPlaylistFromInput(false);
+        if (playlistInput.value.trim()) {
+            loadPlaylistFromInput(false);
+        }
 
         // GSAP animations
         let slideTape = gsap.to(tape, {
@@ -1447,17 +1527,36 @@
             }
         });
 
-        shareBtn.addEventListener('click', function() {
+        shareBtn.addEventListener('click', async function() {
             const playlistUrl = playlistInput.value.trim();
             if (parseMediaSource(playlistUrl)) {
                 const shareUrl = `${window.location.origin}${window.location.pathname}?playlist=${encodeURIComponent(playlistUrl)}`;
+                const shareData = {
+                    title: 'Mixtape Machine',
+                    text: 'Listen to this mix tape.',
+                    url: shareUrl
+                };
 
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    setShareFeedback("Mixtape link copied. Share it anywhere.", "success");
-                }).catch(() => {
+                if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+                    try {
+                        await navigator.share(shareData);
+                        setShareFeedback("Share panel opened. Send your mix anywhere.", "success");
+                        return;
+                    } catch (error) {
+                        if (error && error.name === 'AbortError') {
+                            setShareFeedback("Share canceled.", "");
+                            return;
+                        }
+                    }
+                }
+
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    setShareFeedback("Copied to clipboard. Ready to post.", "success");
+                } catch (error) {
                     prompt('Copy this link to share your mixtape:', shareUrl);
                     setShareFeedback("Copy dialog opened. Share your mixtape link.", "success");
-                });
+                }
             } else {
                 setShareFeedback("Please enter a valid Spotify or SoundCloud link first.", "error");
             }
