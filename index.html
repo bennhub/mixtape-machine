@@ -6,6 +6,7 @@
     <title>Mixtape - Spotify Walkman</title>
     <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Muli:wght@400;600;700;800&family=Permanent+Marker&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://w.soundcloud.com/player/api.js"></script>
     <style>
         :root {
@@ -89,8 +90,7 @@
             overflow: hidden;
         }
 
-        .cassette-art::before {
-            content: "Playlist";
+        .playlist-panel-button {
             position: absolute;
             top: 14px;
             left: 14px;
@@ -103,6 +103,27 @@
             font-size: 0.64rem;
             font-weight: 700;
             letter-spacing: 0.14em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .playlist-panel-button:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0 #111111;
+        }
+
+        .playlist-panel-button:active {
+            transform: translate(1px, 1px);
+            box-shadow: 2px 2px 0 #111111;
+        }
+
+        .playlist-panel-button svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2.4;
         }
 
         .cassette-art.is-active::after {
@@ -240,11 +261,11 @@
                 drop-shadow(0 28px 22px rgba(0, 0, 0, 0.2));
         }
 
-        #playbutton, #pausebutton {
+        #playbutton, #pausebutton, #stopbutton {
             cursor: pointer;
         }
 
-        #stopbutton, #forwardbutton {
+        #forwardbutton {
             cursor: default;
             pointer-events: none;
         }
@@ -926,6 +947,7 @@
                 <path class="st9" d="M374.3 48.8H84.8c-3.9 0-7 3.1-7 7v21c0 3.9 3.1 7 7 7h289.5c3.9 0 7-3.1 7-7v-21c0-3.8-3.1-7-7-7z"/>
                 <path class="st10" d="M131.4 66.3l-12.5 6.8V59.6l12.5 6.7z"/>
                 <path class="st10" d="M188.4 59.6H202v13.6h-13.6V59.6z"/>
+                <path class="st10" d="M258.2 70.2H272v2.6h-13.8v-2.6zm6.9-10 7.1 8.1H258l7.1-8.1z"/>
             </g>
             <g id="rumble-toggle" transform="translate(414 356)">
                 <text id="rumble-hint" x="-4" y="-22" text-anchor="middle" tabindex="0" role="button" aria-label="Rumble help">TAP x4</text>
@@ -949,6 +971,7 @@
                 <div class="cassette-container">
                     <button class="panel-close" id="panel-close-button" type="button">Close</button>
                     <div class="cassette-art">
+                        <button class="playlist-panel-button" id="playlist-panel-button" type="button"><i data-lucide="list-music"></i><span>Playlist</span></button>
                         <div class="recent-mixes" id="recent-mixes">
                             <p class="recent-mixes__title">Recent Mixes</p>
                             <div class="recent-mixes__list" id="recent-mixes-list"></div>
@@ -984,6 +1007,7 @@
         let playlistInput = document.getElementById("playlist-input");
         let widget = document.getElementById("widget");
         let playlistOverlay = document.getElementById("playlist-overlay");
+        let playlistPanelButton = document.getElementById("playlist-panel-button");
         let recentMixes = document.getElementById("recent-mixes");
         let recentMixesList = document.getElementById("recent-mixes-list");
         let recentMixesEmpty = document.getElementById("recent-mixes-empty");
@@ -1289,6 +1313,27 @@
                 playBtn.classList.remove('play-ready');
             } else if (isPlaylistReady) {
                 playBtn.classList.add('play-ready');
+            }
+        }
+
+        function clearCurrentMix(showFeedback = true) {
+            hideNowPlayingSurface();
+            resetAnimation();
+            setPlayerStatus("Stopped");
+            setPlayActiveState(false);
+            setPlayReadyState(false);
+            setRumbleState(false);
+            setRumbleEnabled(false);
+            widget.src = 'about:blank';
+            soundCloudWidget = null;
+            currentProvider = null;
+            cassetteSection.classList.remove('provider-spotify', 'provider-soundcloud');
+            playlistInput.value = '';
+            setWalkmanTitle("");
+            shareBtn.disabled = true;
+            showRecentMixesPanel();
+            if (showFeedback) {
+                setShareFeedback("Recent mixes ready. Pick one to load again.", "");
             }
         }
 
@@ -1633,12 +1678,17 @@
             moveStopBtn.reverse();
 
             stopAnimation();
-            setPlayerStatus("Paused");
-            setPlayActiveState(true);
+            setPlayerStatus("Stopped");
+            setPlayActiveState(false);
             sendPlayerCommand('pause');
         }
 
-        stopBtn.onclick = null;
+        stopBtn.onclick = function() {
+            moveStopBtn.play();
+            movePlayBtn.reverse();
+            movePauseBtn.reverse();
+            clearCurrentMix();
+        };
 
         forwardBtn.onclick = null;
 
@@ -1703,6 +1753,10 @@
         panelCloseButton.addEventListener('click', function() {
             hideNowPlayingSurface();
             setShareFeedback("Now playing panel closed.", "");
+        });
+
+        playlistPanelButton.addEventListener('click', function() {
+            clearCurrentMix(false);
         });
 
         // Share functionality
@@ -1776,7 +1830,12 @@
             }
         });
 
+        if (window.lucide && window.lucide.createIcons) {
+            window.lucide.createIcons();
+        }
+
         setRumbleEnabled(false);
+        shareBtn.disabled = true;
     </script>
 </body>
 </html>
